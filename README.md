@@ -13,3 +13,9 @@
     5）producer把topic内的消息推送到对应的broker，并且在etcd更新对应的topic的状态
     6）consumer在etcd注册需要sub的topic，获取对应的broker
     7）consumer监控所订阅topic的状态，发生改变时去对应的broker进行拉取
+
+#### etcd数据结构
+    brokers:broker/index{id}:ip:port
+            broker/index{id}/topics:name1,name2
+    topics:topic/${name}:broker{id}
+           topic/${name}/attr:lenght
