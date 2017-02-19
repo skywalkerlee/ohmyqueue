@@ -12,9 +12,6 @@ import (
 	"github.com/skywalkerlee/ohmyqueue/etcd"
 )
 
-type topic struct {
-}
-
 type Broker struct {
 	id     int
 	etcd   *etcd.Etcd
@@ -43,10 +40,10 @@ func NewBroker(id int) *Broker {
 
 func (broker *Broker) Start() {
 	go broker.etcd.Heartbeat("broker/index"+strconv.Itoa(broker.id), broker.ip+":"+strconv.Itoa(broker.port), 10)
-	broker.Watch()
+	broker.watch()
 }
 
-func (broker *Broker) Watch() {
+func (broker *Broker) watch() {
 	wch := broker.etcd.Client.Watch(context.TODO(), "broker/index"+strconv.Itoa(int(broker.id))+"/topics", clientv3.WithPrefix())
 	for wresp := range wch {
 		for _, ev := range wresp.Events {
