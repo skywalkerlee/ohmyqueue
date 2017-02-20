@@ -11,6 +11,7 @@ It is generated from these files:
 It has these top-level messages:
 	Req
 	Msg
+	Resp
 	StatusCode
 */
 package serverpb
@@ -60,9 +61,8 @@ func (m *Req) GetOffset() string {
 }
 
 type Msg struct {
-	Topic  string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
-	Offset int32  `protobuf:"varint,2,opt,name=offset" json:"offset,omitempty"`
-	Body   string `protobuf:"bytes,3,opt,name=body" json:"body,omitempty"`
+	Topic string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
+	Body  string `protobuf:"bytes,2,opt,name=body" json:"body,omitempty"`
 }
 
 func (m *Msg) Reset()                    { *m = Msg{} }
@@ -77,18 +77,35 @@ func (m *Msg) GetTopic() string {
 	return ""
 }
 
-func (m *Msg) GetOffset() int32 {
-	if m != nil {
-		return m.Offset
-	}
-	return 0
-}
-
 func (m *Msg) GetBody() string {
 	if m != nil {
 		return m.Body
 	}
 	return ""
+}
+
+type Resp struct {
+	Offset string `protobuf:"bytes,1,opt,name=offset" json:"offset,omitempty"`
+	Msg    *Msg   `protobuf:"bytes,2,opt,name=msg" json:"msg,omitempty"`
+}
+
+func (m *Resp) Reset()                    { *m = Resp{} }
+func (m *Resp) String() string            { return proto.CompactTextString(m) }
+func (*Resp) ProtoMessage()               {}
+func (*Resp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *Resp) GetOffset() string {
+	if m != nil {
+		return m.Offset
+	}
+	return ""
+}
+
+func (m *Resp) GetMsg() *Msg {
+	if m != nil {
+		return m.Msg
+	}
+	return nil
 }
 
 type StatusCode struct {
@@ -98,7 +115,7 @@ type StatusCode struct {
 func (m *StatusCode) Reset()                    { *m = StatusCode{} }
 func (m *StatusCode) String() string            { return proto.CompactTextString(m) }
 func (*StatusCode) ProtoMessage()               {}
-func (*StatusCode) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*StatusCode) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *StatusCode) GetCode() int32 {
 	if m != nil {
@@ -110,6 +127,7 @@ func (m *StatusCode) GetCode() int32 {
 func init() {
 	proto.RegisterType((*Req)(nil), "serverpb.Req")
 	proto.RegisterType((*Msg)(nil), "serverpb.Msg")
+	proto.RegisterType((*Resp)(nil), "serverpb.Resp")
 	proto.RegisterType((*StatusCode)(nil), "serverpb.StatusCode")
 }
 
@@ -121,128 +139,97 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for Pub service
+// Client API for Omq service
 
-type PubClient interface {
+type OmqClient interface {
 	PutMsg(ctx context.Context, in *Msg, opts ...grpc.CallOption) (*StatusCode, error)
+	Poll(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Resp, error)
 }
 
-type pubClient struct {
+type omqClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewPubClient(cc *grpc.ClientConn) PubClient {
-	return &pubClient{cc}
+func NewOmqClient(cc *grpc.ClientConn) OmqClient {
+	return &omqClient{cc}
 }
 
-func (c *pubClient) PutMsg(ctx context.Context, in *Msg, opts ...grpc.CallOption) (*StatusCode, error) {
+func (c *omqClient) PutMsg(ctx context.Context, in *Msg, opts ...grpc.CallOption) (*StatusCode, error) {
 	out := new(StatusCode)
-	err := grpc.Invoke(ctx, "/serverpb.Pub/PutMsg", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/serverpb.Omq/PutMsg", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for Pub service
+func (c *omqClient) Poll(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Resp, error) {
+	out := new(Resp)
+	err := grpc.Invoke(ctx, "/serverpb.Omq/poll", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
-type PubServer interface {
+// Server API for Omq service
+
+type OmqServer interface {
 	PutMsg(context.Context, *Msg) (*StatusCode, error)
+	Poll(context.Context, *Req) (*Resp, error)
 }
 
-func RegisterPubServer(s *grpc.Server, srv PubServer) {
-	s.RegisterService(&_Pub_serviceDesc, srv)
+func RegisterOmqServer(s *grpc.Server, srv OmqServer) {
+	s.RegisterService(&_Omq_serviceDesc, srv)
 }
 
-func _Pub_PutMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Omq_PutMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Msg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PubServer).PutMsg(ctx, in)
+		return srv.(OmqServer).PutMsg(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/serverpb.Pub/PutMsg",
+		FullMethod: "/serverpb.Omq/PutMsg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PubServer).PutMsg(ctx, req.(*Msg))
+		return srv.(OmqServer).PutMsg(ctx, req.(*Msg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Pub_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "serverpb.Pub",
-	HandlerType: (*PubServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "PutMsg",
-			Handler:    _Pub_PutMsg_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "serverpb.proto",
-}
-
-// Client API for Sub service
-
-type SubClient interface {
-	Poll(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Msg, error)
-}
-
-type subClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewSubClient(cc *grpc.ClientConn) SubClient {
-	return &subClient{cc}
-}
-
-func (c *subClient) Poll(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Msg, error) {
-	out := new(Msg)
-	err := grpc.Invoke(ctx, "/serverpb.Sub/poll", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Server API for Sub service
-
-type SubServer interface {
-	Poll(context.Context, *Req) (*Msg, error)
-}
-
-func RegisterSubServer(s *grpc.Server, srv SubServer) {
-	s.RegisterService(&_Sub_serviceDesc, srv)
-}
-
-func _Sub_Poll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Omq_Poll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Req)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubServer).Poll(ctx, in)
+		return srv.(OmqServer).Poll(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/serverpb.Sub/Poll",
+		FullMethod: "/serverpb.Omq/Poll",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubServer).Poll(ctx, req.(*Req))
+		return srv.(OmqServer).Poll(ctx, req.(*Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Sub_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "serverpb.Sub",
-	HandlerType: (*SubServer)(nil),
+var _Omq_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "serverpb.Omq",
+	HandlerType: (*OmqServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "PutMsg",
+			Handler:    _Omq_PutMsg_Handler,
+		},
+		{
 			MethodName: "poll",
-			Handler:    _Sub_Poll_Handler,
+			Handler:    _Omq_Poll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -252,18 +239,19 @@ var _Sub_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("serverpb.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 198 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0x4e, 0x2d, 0x2a,
-	0x4b, 0x2d, 0x2a, 0x48, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf1, 0x95, 0x8c,
-	0xb9, 0x98, 0x83, 0x52, 0x0b, 0x85, 0x44, 0xb8, 0x58, 0x4b, 0xf2, 0x0b, 0x32, 0x93, 0x25, 0x18,
-	0x15, 0x18, 0x35, 0x38, 0x83, 0x20, 0x1c, 0x21, 0x31, 0x2e, 0xb6, 0xfc, 0xb4, 0xb4, 0xe2, 0xd4,
-	0x12, 0x09, 0x26, 0xb0, 0x30, 0x94, 0xa7, 0xe4, 0xce, 0xc5, 0xec, 0x5b, 0x9c, 0x4e, 0x94, 0x26,
-	0x56, 0x98, 0x26, 0x21, 0x21, 0x2e, 0x96, 0xa4, 0xfc, 0x94, 0x4a, 0x09, 0x66, 0xb0, 0x62, 0x30,
-	0x5b, 0x49, 0x81, 0x8b, 0x2b, 0xb8, 0x24, 0xb1, 0xa4, 0xb4, 0xd8, 0x39, 0x3f, 0x25, 0x15, 0xa4,
-	0x22, 0x39, 0x3f, 0x25, 0x15, 0x6c, 0x1c, 0x6b, 0x10, 0x98, 0x6d, 0x64, 0xc6, 0xc5, 0x1c, 0x50,
-	0x9a, 0x24, 0xa4, 0xcf, 0xc5, 0x16, 0x50, 0x5a, 0x02, 0xb2, 0x94, 0x57, 0x0f, 0xee, 0x17, 0xdf,
-	0xe2, 0x74, 0x29, 0x11, 0x04, 0x17, 0x61, 0x92, 0x12, 0x83, 0x91, 0x2e, 0x17, 0x73, 0x70, 0x69,
-	0x92, 0x90, 0x1a, 0x17, 0x4b, 0x41, 0x7e, 0x4e, 0x0e, 0xb2, 0xae, 0xa0, 0xd4, 0x42, 0x29, 0x54,
-	0x43, 0x94, 0x18, 0x92, 0xd8, 0xc0, 0xe1, 0x62, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xca, 0xca,
-	0x23, 0xed, 0x29, 0x01, 0x00, 0x00,
+	// 217 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x90, 0xc1, 0x4e, 0x84, 0x30,
+	0x10, 0x86, 0x17, 0xcb, 0x12, 0x1d, 0xe3, 0x1e, 0x9a, 0x8d, 0xd9, 0x70, 0x91, 0xf4, 0xa2, 0x27,
+	0x48, 0xe0, 0x01, 0x3c, 0x78, 0x26, 0x9a, 0xfa, 0x00, 0x46, 0x60, 0x20, 0x26, 0x90, 0x29, 0x4c,
+	0x31, 0xf1, 0xed, 0x0d, 0x15, 0xa5, 0x1e, 0xf6, 0x36, 0x5f, 0xdb, 0xff, 0xeb, 0x9f, 0x81, 0x03,
+	0xe3, 0xf4, 0x89, 0x93, 0xa9, 0x52, 0x33, 0x91, 0x25, 0x79, 0xf9, 0xcb, 0xaa, 0x00, 0xa1, 0x71,
+	0x94, 0x47, 0xd8, 0x5b, 0x32, 0x1f, 0xf5, 0x29, 0x48, 0x82, 0x87, 0x2b, 0xfd, 0x03, 0xf2, 0x16,
+	0x22, 0x6a, 0x5b, 0x46, 0x7b, 0xba, 0x70, 0xc7, 0x2b, 0xa9, 0x0c, 0x44, 0xc9, 0xdd, 0x99, 0x90,
+	0x84, 0xb0, 0xa2, 0xe6, 0x6b, 0x8d, 0xb8, 0x59, 0x3d, 0x42, 0xa8, 0x91, 0x8d, 0x27, 0x0c, 0x7c,
+	0xa1, 0xbc, 0x03, 0x31, 0x70, 0xe7, 0x22, 0xd7, 0xf9, 0x4d, 0xfa, 0xd7, 0xb6, 0xe4, 0x4e, 0x2f,
+	0x37, 0x2a, 0x01, 0x78, 0xb5, 0xef, 0x76, 0xe6, 0x27, 0x6a, 0x70, 0xf9, 0xa2, 0xa6, 0x06, 0x9d,
+	0x64, 0xaf, 0xdd, 0x9c, 0xbf, 0x81, 0x78, 0x1e, 0x46, 0x99, 0x41, 0xf4, 0x32, 0xdb, 0xa5, 0xdd,
+	0x7f, 0x4d, 0x7c, 0xdc, 0x70, 0x33, 0xa9, 0x9d, 0xbc, 0x87, 0xd0, 0x50, 0xdf, 0xfb, 0xcf, 0x35,
+	0x8e, 0xf1, 0xc1, 0x47, 0x36, 0x6a, 0x57, 0x45, 0x6e, 0x75, 0xc5, 0x77, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x4f, 0xd8, 0x07, 0xfe, 0x4c, 0x01, 0x00, 0x00,
 }
