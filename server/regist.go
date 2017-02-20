@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/ohmq/ohmyqueue/etcd"
 	"github.com/ohmq/ohmyqueue/msg"
-	"github.com/skywalkerlee/ohmyqueue/etcd"
 )
 
 type Broker struct {
