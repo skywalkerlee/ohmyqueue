@@ -2,11 +2,8 @@ syntax="proto3";
 
 package serverpb;
 
-service Pub{
+service Omq{
     rpc PutMsg(Msg) returns (StatusCode){}
-}
-
-service Sub{
     rpc poll(Req) returns (Msg){}
 }
 
