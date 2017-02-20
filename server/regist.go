@@ -9,18 +9,19 @@ import (
 	"strings"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/ohmq/ohmyqueue/msg"
 	"github.com/skywalkerlee/ohmyqueue/etcd"
 )
 
 type Broker struct {
-	id     int
-	etcd   *etcd.Etcd
-	ip     string
-	port   int
-	topics []string
+	id   int
+	etcd *etcd.Etcd
+	ip   string
+	port int
+	msgs *msg.Msgs
 }
 
-func NewBroker(id int) *Broker {
+func NewBroker(id int, msgs *msg.Msgs) *Broker {
 	ip := ""
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
@@ -35,6 +36,7 @@ func NewBroker(id int) *Broker {
 		etcd: etcd.NewEtcd(),
 		ip:   ip,
 		port: 22881,
+		msgs: msgs,
 	}
 }
 
@@ -49,7 +51,7 @@ func (broker *Broker) watch() {
 		for _, ev := range wresp.Events {
 			switch ev.Type.String() {
 			case "PUT":
-				broker.topics = strings.Split(string(ev.Kv.Value), ",")
+				broker.msgs.Update(strings.Split(string(ev.Kv.Value), ","))
 			}
 		}
 	}

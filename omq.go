@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/skywalkerlee/ohmyqueue/server"
+	"github.com/ohmq/ohmyqueue/msg"
+	"github.com/ohmq/ohmyqueue/server"
 )
 
 func main() {
-	broker := server.NewBroker(1)
+	msgs := msg.NewMsgs()
+	broker := server.NewBroker(1, msgs)
 	broker.Start()
 }
