@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 
-	"log"
+	"os"
 
+	"github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/etcd"
 	"github.com/ohmq/ohmyqueue/serverpb"
 	"google.golang.org/grpc"
@@ -17,7 +18,8 @@ func main() {
 	client := serverpb.NewOmqClient(conn)
 	statuscode, err := client.PutMsg(context.TODO(), &serverpb.Msg{"test1", "this is the first message of omq"})
 	if err != nil {
-		log.Fatal(err)
+		logs.Error(err)
+		os.Exit(1)
 	}
-	log.Println(statuscode.GetCode())
+	logs.Info(statuscode.GetCode())
 }

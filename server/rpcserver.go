@@ -4,8 +4,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"log"
-
+	log "github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/msg"
 	"github.com/ohmq/ohmyqueue/serverpb"
 	"golang.org/x/net/context"
@@ -16,7 +15,7 @@ type RpcServer struct {
 }
 
 func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *serverpb.Msg) (*serverpb.StatusCode, error) {
-	log.Println("msgput")
+	log.Info("PutMsg")
 	localmsg := msg.Msg{
 		Header: msg.Header{
 			Len:      utf8.RuneCountInString(remotemsg.GetBody()),
@@ -24,7 +23,7 @@ func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *serverpb.Msg) (*se
 		},
 		Body: remotemsg.GetBody(),
 	}
-	log.Printf("%s %#v", remotemsg.GetTopic(), localmsg)
+	log.Info("%s %#v", remotemsg.GetTopic(), localmsg)
 	self.Msgs.Put(remotemsg.GetTopic(), localmsg)
 	return &serverpb.StatusCode{Code: 200}, nil
 }

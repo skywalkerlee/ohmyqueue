@@ -1,10 +1,10 @@
 package msg
 
 import (
-	"fmt"
-	"log"
 	"strconv"
 	"time"
+
+	log "github.com/astaxie/beego/logs"
 )
 
 type Topic struct {
@@ -29,25 +29,23 @@ func (msgs *Msgs) DelTopic(name string) {
 }
 
 func (msgs *Msgs) Update(names []string) {
-	log.Println("Update")
 	for _, name := range names {
 		if _, ok := msgs.Topics[name]; !ok {
 			msgs.AddTopic(name, Topic{Alivetime: int64(time.Second * 120), Message: make(map[string]Msg)})
 		}
 	}
 	for name, topic := range msgs.Topics {
-		fmt.Printf("%s %#v \n", name, topic)
+		log.Info("%s %#v \n", name, topic)
 	}
 }
 
 func (msgs *Msgs) Put(topic string, msg Msg) {
-	log.Println("put")
-	log.Println(msgs.Topics[topic])
+	log.Info(msgs.Topics[topic])
 	msgs.Topics[topic].Message[strconv.Itoa(len(msgs.Topics[topic].Message))] = msg
 	for k, v := range msgs.Topics[topic].Message {
-		log.Printf("%s %#v\n", k, v)
+		log.Info("%s %#v\n", k, v)
 	}
-	log.Println(msgs.Topics[topic])
+	log.Info(msgs.Topics[topic])
 
 }
 

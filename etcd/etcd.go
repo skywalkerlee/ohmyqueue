@@ -2,9 +2,11 @@ package etcd
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"os"
+
+	log "github.com/astaxie/beego/logs"
 	"github.com/coreos/etcd/clientv3"
 )
 
@@ -18,7 +20,8 @@ func NewEtcd() *Etcd {
 		DialTimeout: time.Second * 5,
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 	return &Etcd{cli}
 }
@@ -26,18 +29,21 @@ func NewEtcd() *Etcd {
 func (etcd *Etcd) Heartbeat(key, value string, timeout int64) {
 	resp, err := etcd.Client.Grant(context.TODO(), timeout)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 	_, err = etcd.Client.Put(context.TODO(), key, value, clientv3.WithLease(resp.ID))
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 	for {
 		select {
 		case <-time.After(time.Second):
 			_, err = etcd.Client.KeepAliveOnce(context.TODO(), resp.ID)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				os.Exit(1)
 			}
 		}
 	}
