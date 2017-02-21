@@ -25,4 +25,4 @@ omq(OhMyQueue) is a distributed message queue
     2)消息如何进行容灾备份
     3)负载算法
     4)节点有状态 or 无状态
-    5)是否可以剥离etcd，自己通过Raft协议保证一直性
+    5)是否可以剥离etcd，自己通过Raft协议保证一直性以及做服务调配
