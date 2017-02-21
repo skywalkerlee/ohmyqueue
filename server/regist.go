@@ -35,7 +35,7 @@ func NewBroker(id int, msgs *msg.Msgs) *Broker {
 		id:   id,
 		etcd: etcd.NewEtcd(),
 		ip:   ip,
-		port: 22881,
+		port: 9988,
 		msgs: msgs,
 	}
 }

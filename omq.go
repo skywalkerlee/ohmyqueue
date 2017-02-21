@@ -26,6 +26,6 @@ func main() {
 		os.Exit(1)
 	}
 	s := grpc.NewServer()
-	serverpb.RegisterOmqServer(s, &server.RpcServer{Msgs: msgs})
+	serverpb.RegisterOmqServer(s, &server.RpcServer{Broker: broker})
 	s.Serve(lis)
 }
