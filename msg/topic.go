@@ -38,12 +38,9 @@ func (msgs *Msgs) Update(names []string) {
 
 func (msgs *Msgs) Put(topic string, msg Msg) {
 	log.Println("put")
-	index := strconv.Itoa(len(msgs.Topics[topic].Message))
-	log.Println(index)
-	aa := msgs.Topics[topic]
-	aa.Message[index] = msg
+	msgs.Topics[topic].Message[strconv.Itoa(len(msgs.Topics[topic].Message))] = msg
 	for k, v := range msgs.Topics[topic].Message {
-		log.Println(k, v)
+		log.Printf("%s %#v\n", k, v)
 	}
 }
 
