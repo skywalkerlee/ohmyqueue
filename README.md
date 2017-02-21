@@ -8,7 +8,7 @@ omq(OhMyQueue) is a distributed message queue
     brokers:broker/index{id}:ip:port
             broker/index{id}/topics:name1,name2
     topics:topic/${name}:broker{id}
-           topic/${name}/attr:lenght
+           topic/${name}/attr:updatetime
 
 
 #### 目前的想法：
