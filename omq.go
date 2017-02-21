@@ -15,6 +15,8 @@ import (
 func main() {
 	log.SetLogger("console")
 	log.SetLogger(log.AdapterFile, `{"filename":"test.log"}`)
+	log.EnableFuncCallDepth(true)
+	log.SetLogFuncCallDepth(3)
 	msgs := msg.NewMsgs()
 	broker := server.NewBroker(1, msgs)
 	go broker.Start()
