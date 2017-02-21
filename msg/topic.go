@@ -31,7 +31,7 @@ func (msgs *Msgs) Update(names []string) {
 	log.Println("Update")
 	for _, name := range names {
 		if _, ok := msgs.Topics[name]; !ok {
-			msgs.Topics[name] = Topic{Alivetime: int64(time.Second * 120), Message: make(map[string]Msg)}
+			msgs.AddTopic(name, Topic{Alivetime: int64(time.Second * 120), Message: make(map[string]Msg)})
 		}
 	}
 }
