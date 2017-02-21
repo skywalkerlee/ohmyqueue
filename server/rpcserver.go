@@ -24,6 +24,7 @@ func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *serverpb.Msg) (*se
 		},
 		Body: remotemsg.GetBody(),
 	}
+	log.Printf("%s %#v", remotemsg.GetTopic(), localmsg)
 	self.Msgs.Put(remotemsg.GetTopic(), localmsg)
 	return &serverpb.StatusCode{Code: 200}, nil
 }
