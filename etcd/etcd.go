@@ -39,7 +39,8 @@ func (etcd *Etcd) Heartbeat(key, value string, timeout int64) {
 	}
 	for {
 		select {
-		case <-time.After(time.Second):
+		case <-time.After(time.Second * 8):
+			log.Info("hearbeat")
 			_, err = etcd.Client.KeepAliveOnce(context.TODO(), resp.ID)
 			if err != nil {
 				log.Error(err)

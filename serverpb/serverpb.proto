@@ -9,19 +9,18 @@ service Omq{
 
 
 message Req{
-    string topic=1;
     string offset=2;
 }
 
 
 message Msg{
-    string topic=1;
+    string offset=1;
     string body=2;
 }
 
 message Resp{
     string offset=1;
-    Msg msg=2;
+    string msg=2;
 }
 
 message StatusCode{

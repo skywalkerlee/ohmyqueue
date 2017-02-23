@@ -8,6 +8,7 @@ import (
 )
 
 type Topic struct {
+	Leader    string
 	Alivetime int64
 	Message   map[string]Msg
 }
