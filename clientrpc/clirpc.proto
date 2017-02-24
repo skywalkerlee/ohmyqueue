@@ -1,6 +1,6 @@
 syntax="proto3";
 
-package serverpb;
+package clientrpc;
 
 service Omq{
     rpc PutMsg(Msg) returns (StatusCode){}
@@ -25,4 +25,5 @@ message Resp{
 
 message StatusCode{
     int32 code=1;
+    string offset=2;
 }

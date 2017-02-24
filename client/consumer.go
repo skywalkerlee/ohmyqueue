@@ -2,58 +2,84 @@ package main
 
 import (
 	"context"
+
+	"sync"
+
 	"strconv"
 
 	"github.com/astaxie/beego/logs"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/ohmq/ohmyqueue/clientrpc"
 	"github.com/ohmq/ohmyqueue/etcd"
-	"github.com/ohmq/ohmyqueue/serverpb"
 	"google.golang.org/grpc"
 )
 
-func main() {
-	logs.EnableFuncCallDepth(true)
-	logs.SetLogFuncCallDepth(3)
-	etcd := etcd.NewEtcd()
-	resp, _ := etcd.Client.Get(context.TODO(), "topic/test1")
-	addr := ""
-	for _, ev := range resp.Kvs {
-		resp, _ := etcd.Client.Get(context.TODO(), string(ev.Value))
-		for _, ev := range resp.Kvs {
-			logs.Info(string(ev.Value))
-			addr = string(ev.Value)
-		}
+type cli struct {
+	offset  string
+	mutex   *sync.Mutex
+	etcdcli *clientv3.Client
+	client  clientrpc.OmqClient
+}
+
+func newcli() *cli {
+	return &cli{
+		offset:  "0",
+		mutex:   new(sync.Mutex),
+		etcdcli: etcd.NewEtcd().Client,
 	}
-	conn, _ := grpc.Dial(addr, grpc.WithInsecure())
-	client := serverpb.NewOmqClient(conn)
-	resp, _ = etcd.Client.Get(context.TODO(), "topic/test1/attr")
-	rpcresp := &serverpb.Resp{}
-	rpcresp.Offset = "0"
-	rpcresp, _ = client.Poll(context.TODO(), &serverpb.Req{Topic: "test1", Offset: rpcresp.Offset})
-	logs.Info(rpcresp)
-	for _, ev := range resp.Kvs {
-		for {
-			if rpcresp.GetOffset() == string(ev.Value) {
-				break
-			}
-			offset, _ := strconv.Atoi(rpcresp.GetOffset())
-			offset++
-			off := strconv.Itoa(offset)
-			rpcresp, _ = client.Poll(context.TODO(), &serverpb.Req{Topic: "test1", Offset: off})
-			logs.Info(rpcresp)
-		}
-	}
-	wch := etcd.Client.Watch(context.TODO(), "topic/test1/attr")
+}
+
+func (cli *cli) watchleader() {
+	wch := cli.etcdcli.Watch(context.TODO(), "leader")
 	for wresp := range wch {
 		for _, ev := range wresp.Events {
 			switch ev.Type.String() {
 			case "PUT":
-				offset, _ := strconv.Atoi(rpcresp.GetOffset())
-				offset++
-				off := strconv.Itoa(offset)
-				rpcresp, _ = client.Poll(context.TODO(), &serverpb.Req{Topic: "test1", Offset: off})
-				logs.Info(rpcresp)
+				conn, _ := grpc.Dial(string(ev.Kv.Value), grpc.WithInsecure())
+				cli.mutex.Lock()
+				cli.client = clientrpc.NewOmqClient(conn)
+				cli.mutex.Unlock()
 			}
 		}
 	}
+}
 
+func (cli *cli) poll(offset string) *clientrpc.Resp {
+	cli.mutex.Lock()
+	resp, _ := cli.client.Poll(context.TODO(), &clientrpc.Req{Offset: offset})
+	cli.mutex.Unlock()
+	return resp
+}
+
+func main() {
+	logs.EnableFuncCallDepth(true)
+	logs.SetLogFuncCallDepth(3)
+	cli := newcli()
+	getresp, _ := cli.etcdcli.Get(context.TODO(), "leader")
+	conn, _ := grpc.Dial(string(getresp.Kvs[0].Value), grpc.WithInsecure())
+	cli.client = clientrpc.NewOmqClient(conn)
+	go cli.watchleader()
+	resp, _ := cli.etcdcli.Get(context.TODO(), "topic")
+	offset := string(resp.Kvs[0].Value)
+	if offset != "0" {
+		for cli.offset < offset {
+			plresp, _ := cli.client.Poll(context.TODO(), &clientrpc.Req{Offset: cli.offset})
+			logs.Info("%#v", plresp)
+			tmp, _ := strconv.Atoi(cli.offset)
+			tmp++
+			cli.offset = strconv.Itoa(tmp)
+		}
+	}
+	wch := cli.etcdcli.Watch(context.TODO(), "topic")
+	for wresp := range wch {
+		for _, ev := range wresp.Events {
+			switch ev.Type.String() {
+			case "PUT":
+				tmp, _ := strconv.Atoi(string(ev.Kv.Value))
+				cli.offset = strconv.Itoa(tmp - 1)
+				plresp, _ := cli.client.Poll(context.TODO(), &clientrpc.Req{Offset: cli.offset})
+				logs.Info("%#v", plresp)
+			}
+		}
+	}
 }

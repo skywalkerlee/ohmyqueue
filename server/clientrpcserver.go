@@ -3,33 +3,34 @@ package server
 import (
 	"golang.org/x/net/context"
 
+	"strconv"
+
 	log "github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/broker"
-	"github.com/ohmq/ohmyqueue/serverpb"
+	"github.com/ohmq/ohmyqueue/clientrpc"
 )
 
 type RpcServer struct {
 	Broker *broker.Broker
 }
 
-func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *serverpb.Msg) (*serverpb.StatusCode, error) {
+func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg) (*clientrpc.StatusCode, error) {
 	log.Info("PutMsg")
-	err := rpcserver.Broker.Put(remotemsg.GetOffset(), remotemsg.GetBody())
-	if err == nil {
-		return &serverpb.StatusCode{Code: 200}, err
-	}
-	return nil, err
+	log.Info(remotemsg.GetBody())
+	rpcserver.Broker.Put(remotemsg.GetBody())
+
+	return &clientrpc.StatusCode{Code: 200, Offset: strconv.Itoa(rpcserver.Broker.Len())}, nil
 }
 
-func (rpcserver *RpcServer) Poll(ctx context.Context, req *serverpb.Req) (*serverpb.Resp, error) {
+func (rpcserver *RpcServer) Poll(ctx context.Context, req *clientrpc.Req) (*clientrpc.Resp, error) {
 	body, err := rpcserver.Broker.Get(req.GetOffset())
 	if err == nil {
-		return &serverpb.Resp{Offset: req.GetOffset(), Msg: body}, err
+		return &clientrpc.Resp{Offset: req.GetOffset(), Msg: body}, err
 	}
 	return nil, err
 }
 
-// func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *serverpb.Msg) (*serverpb.StatusCode, error) {
+// func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg) (*clientrpc.StatusCode, error) {
 // 	log.Info("PutMsg")
 // 	localmsg := msg.Msg{
 // 		Header: msg.Header{
@@ -41,14 +42,14 @@ func (rpcserver *RpcServer) Poll(ctx context.Context, req *serverpb.Req) (*serve
 // 	log.Info("%s %#v", remotemsg.GetTopic(), localmsg)
 // 	self.BrokerPut(remotemsg.GetTopic(), localmsg)
 // 	self.Broker.Etcd.Client.Put(context.TODO(), "topic/"+remotemsg.GetTopic()+"/attr", strconv.Itoa(len(self.Broker.Msgs.Topics[remotemsg.GetTopic()].Message)-1))
-// 	return &serverpb.StatusCode{Code: 200}, nil
+// 	return &clientrpc.StatusCode{Code: 200}, nil
 // }
 
-// func (self *RpcServer) Poll(ctx context.Context, req *serverpb.Req) (*serverpb.Resp, error) {
+// func (self *RpcServer) Poll(ctx context.Context, req *clientrpc.Req) (*clientrpc.Resp, error) {
 // 	msg := self.Broker.Msgs.Get(req.GetTopic(), req.GetOffset())
-// 	return &serverpb.Resp{
+// 	return &clientrpc.Resp{
 // 		Offset: req.Offset,
-// 		Msg: &serverpb.Msg{
+// 		Msg: &clientrpc.Msg{
 // 			Topic: req.GetTopic(),
 // 			Body:  msg.Body,
 // 		},

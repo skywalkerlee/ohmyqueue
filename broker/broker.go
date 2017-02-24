@@ -5,24 +5,35 @@ import (
 
 	"errors"
 
+	"sync"
+
+	"strconv"
+
+	"github.com/astaxie/beego/logs"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/ohmq/ohmyqueue/etcd"
+	"github.com/ohmq/ohmyqueue/inrpc"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 type Broker struct {
 	id         int
-	Etcd       *etcd.Etcd
+	Client     *clientv3.Client
 	ip         string
 	clientport int
 	innerport  int
 	votechan   chan struct{}
-	// Msgs       *msg.Msgs
-	leader  string
-	members []string
-	msg     map[string]string
+	leader     string
+	members    map[string]string
+	msg        map[string]string
+	lock       *sync.Mutex
+	// ldtopic    map[string]map[string]string
+	// mbtopic    map[string]map[string]string
 }
 
 func NewBroker(id int, cliport int, inport int) *Broker {
-	ip := ""
+	var ip string
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
 		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
@@ -31,24 +42,38 @@ func NewBroker(id int, cliport int, inport int) *Broker {
 			}
 		}
 	}
-	var members []string
 	return &Broker{
 		id:         id,
-		Etcd:       etcd.NewEtcd(),
+		Client:     etcd.NewEtcd().Client,
 		ip:         ip,
-		members:    members,
+		members:    make(map[string]string),
 		clientport: cliport,
 		innerport:  inport,
 		msg:        make(map[string]string),
+		lock:       new(sync.Mutex),
 	}
 }
 
-func (broker *Broker) Put(offset, body string) error {
-	if _, ok := broker.msg[offset]; ok {
-		broker.msg[offset] = body
-		return nil
+func (broker *Broker) Put(body string) {
+	logs.Info("put")
+	broker.msg[strconv.Itoa(len(broker.msg))] = body
+	if len(broker.members) == 0 {
+		return
 	}
-	return errors.New("offset is allready exist now")
+	for _, v := range broker.members {
+		go func(addr string) {
+			defer func() {
+				if err := recover(); err != nil {
+					logs.Error(err)
+				}
+			}()
+			broker.sync(addr)
+		}(v)
+	}
+}
+
+func (broker *Broker) Len() int {
+	return len(broker.msg)
 }
 
 func (broker *Broker) Get(offset string) (string, error) {
@@ -56,4 +81,25 @@ func (broker *Broker) Get(offset string) (string, error) {
 		return v, nil
 	}
 	return "", errors.New("offset is not exist")
+}
+
+func (broker *Broker) sync(addr string) {
+	logs.Info("sync", addr)
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		panic(err.Error())
+	}
+	client := inrpc.NewInClient(conn)
+	stream, err := client.SyncMsg(context.TODO())
+	if err != nil {
+		panic(err.Error())
+	}
+	for k, v := range broker.msg {
+		stream.Send(&inrpc.Msg{Topic: "test", Offset: k, Body: v})
+	}
+	statuscode, err := stream.CloseAndRecv()
+	if err != nil {
+		panic(err.Error())
+	}
+	logs.Info(statuscode.GetSum())
 }

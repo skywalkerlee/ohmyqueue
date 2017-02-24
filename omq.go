@@ -9,8 +9,9 @@ import (
 
 	log "github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/broker"
+	"github.com/ohmq/ohmyqueue/clientrpc"
+	"github.com/ohmq/ohmyqueue/inrpc"
 	"github.com/ohmq/ohmyqueue/server"
-	"github.com/ohmq/ohmyqueue/serverpb"
 	"google.golang.org/grpc"
 )
 
@@ -28,12 +29,20 @@ func main() {
 	inport, _ := strconv.Atoi(os.Args[3])
 	broker := broker.NewBroker(index, cliport, inport)
 	go broker.Start()
-	lis, err := net.Listen("tcp", os.Args[2])
+	lis, err := net.Listen("tcp", ":"+os.Args[2])
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 	s := grpc.NewServer()
-	serverpb.RegisterOmqServer(s, &server.RpcServer{Broker: broker})
-	s.Serve(lis)
+	clientrpc.RegisterOmqServer(s, &server.RpcServer{Broker: broker})
+	go s.Serve(lis)
+	lis2, err := net.Listen("tcp", ":"+os.Args[3])
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+	s2 := grpc.NewServer()
+	inrpc.RegisterInServer(s2, &server.InrpcServer{Broker: broker})
+	s2.Serve(lis2)
 }

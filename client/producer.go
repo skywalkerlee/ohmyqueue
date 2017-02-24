@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/astaxie/beego/logs"
+	"github.com/ohmq/ohmyqueue/clientrpc"
 	"github.com/ohmq/ohmyqueue/etcd"
-	"github.com/ohmq/ohmyqueue/serverpb"
 	"google.golang.org/grpc"
 )
 
-func main() {
+func test() {
 	logs.EnableFuncCallDepth(true)
 	logs.SetLogFuncCallDepth(3)
 	if len(os.Args) < 2 {
@@ -19,18 +19,16 @@ func main() {
 		os.Exit(1)
 	}
 	etcd := etcd.NewEtcd()
-	etcd.Client.Put(context.TODO(), "broker/index1/topics", "test1")
-	etcd.Client.Put(context.TODO(), "topic/test1", "broker/index1")
-	conn, _ := grpc.Dial("127.0.0.1:9988", grpc.WithInsecure())
-	client := serverpb.NewOmqClient(conn)
-	statuscode, err := client.PutMsg(context.TODO(), &serverpb.Msg{"test1", os.Args[1]})
+	defer etcd.Client.Close()
+	resp, _ := etcd.Client.Get(context.TODO(), "leader")
+	logs.Info(string(resp.Kvs[0].Value))
+	conn, _ := grpc.Dial(string(resp.Kvs[0].Value), grpc.WithInsecure())
+	client := clientrpc.NewOmqClient(conn)
+	statuscode, err := client.PutMsg(context.TODO(), &clientrpc.Msg{Body: os.Args[1]})
 	if err != nil {
 		logs.Error(err)
 		os.Exit(1)
 	}
 	logs.Info(statuscode.GetCode())
-	resp, _ := etcd.Client.Get(context.TODO(), "topic/test1/attr")
-	for _, ev := range resp.Kvs {
-		logs.Info(string(ev.Value))
-	}
+	etcd.Client.Put(context.TODO(), "topic", statuscode.GetOffset())
 }
