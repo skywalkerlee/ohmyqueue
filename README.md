@@ -4,13 +4,6 @@ omq(OhMyQueue) is a distributed message queue
 #### 架构图
    ![image](./doc/arch.png)
 
-#### etcd数据结构(not done)
-    brokers:broker/index{id}:ip:port
-            broker/index{id}/topics:name1,name2
-    topics:topic/${name}:broker{id}
-           topic/${name}/attr:updatetime
-
-
 #### 目前的想法：
     1）使用gRPC进行通信，protobuf作为IDL(Interface Definition Language,接口定义语言)(是否要支持Thirft?)
     2）使用leveldb进行数据持久化（需不需要做持久化？）
