@@ -8,7 +8,7 @@ omq(OhMyQueue) is a distributed message queue
 
 #### Features：
 * 使用gRPC进行通信,protobuf作为数据交换格式,支持TLS(后续支持Thirft,RESTful因为相比之下使用复杂而且性能较差暂不考虑,毕竟是业余时间搞的小项目,时间条件不充裕(o(╯□╰)o))
-* 消息具有生命周期,过期数据会被清楚,在生命周期内可以多次被消费
+* 消息具有生命周期,过期数据会被清理,在生命周期内可以多次被消费
 * 使用RocksDB进行数据持久化(后续支持LevelDB,性能至上^_^)
 * 后续支持文件映射(mmap),消息直接写磁盘(抄袭kafka,O(∩_∩)O)
 * 弱一致性,后续提供强一致性选项(通过raft算法实现)
