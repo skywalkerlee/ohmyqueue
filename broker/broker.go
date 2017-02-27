@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/ohmq/ohmyqueue/etcd"
 	"github.com/ohmq/ohmyqueue/inrpc"
+	"github.com/tecbot/gorocksdb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -28,6 +29,7 @@ type Broker struct {
 	members    map[string]string
 	msg        map[string]string
 	lock       *sync.Mutex
+	db         *gorocksdb.DB
 	// ldtopic    map[string]map[string]string
 	// mbtopic    map[string]map[string]string
 }
@@ -42,6 +44,7 @@ func NewBroker(id int, cliport int, inport int) *Broker {
 			}
 		}
 	}
+
 	return &Broker{
 		id:         id,
 		Client:     etcd.NewEtcd().Client,
@@ -51,7 +54,13 @@ func NewBroker(id int, cliport int, inport int) *Broker {
 		innerport:  inport,
 		msg:        make(map[string]string),
 		lock:       new(sync.Mutex),
+		db:         newDB(),
 	}
+}
+
+func (broker *Broker) Close() {
+	broker.Client.Close()
+	broker.db.Close()
 }
 
 func (broker *Broker) Put(body string) {
