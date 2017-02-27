@@ -13,8 +13,8 @@ import (
 )
 
 func (broker *Broker) Start() {
-	logs.Info(broker.innerport)
-	go broker.heartbeat("broker"+strconv.Itoa(broker.id), broker.ip+":"+strconv.Itoa(broker.innerport), 5)
+	broker.load()
+	go broker.heartbeat("broker"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, 5)
 	broker.watchLeader()
 }
 
@@ -80,7 +80,7 @@ func (broker *Broker) vote() {
 		}
 		if txnresp, _ := broker.Client.Txn(context.TODO()).
 			If(clientv3.Compare(clientv3.CreateRevision("leader"), "=", 0)).
-			Then(clientv3.OpPut("leader", broker.ip+":"+strconv.Itoa(broker.clientport), clientv3.WithLease(resp.ID))).
+			Then(clientv3.OpPut("leader", broker.ip+":"+broker.clientport, clientv3.WithLease(resp.ID))).
 			Commit(); txnresp.Succeeded {
 			go broker.leaderhearbeat(resp)
 			go broker.watchmembers()

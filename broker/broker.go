@@ -22,8 +22,8 @@ type Broker struct {
 	id         int
 	Client     *clientv3.Client
 	ip         string
-	clientport int
-	innerport  int
+	clientport string
+	innerport  string
 	votechan   chan struct{}
 	leader     string
 	members    map[string]string
@@ -34,7 +34,7 @@ type Broker struct {
 	// mbtopic    map[string]map[string]string
 }
 
-func NewBroker(id int, cliport int, inport int) *Broker {
+func NewBroker(id int, cliport string, inport string) *Broker {
 	var ip string
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
@@ -66,6 +66,7 @@ func (broker *Broker) Close() {
 func (broker *Broker) Put(body string) {
 	logs.Info("put")
 	broker.msg[strconv.Itoa(len(broker.msg))] = body
+	broker.dump(strconv.Itoa(len(broker.msg)), body)
 	if len(broker.members) == 0 {
 		return
 	}

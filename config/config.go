@@ -12,6 +12,7 @@ type Config struct {
 		Addr []string `toml:"addr"`
 	} `toml:"etcd"`
 	Omq struct {
+		Index      int    `toml:"index"`
 		Clientport string `toml:"clientport"`
 		Innerport  string `toml:"innerport"`
 		Timeout    int    `toml:"timeout"`

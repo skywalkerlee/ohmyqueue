@@ -7,6 +7,7 @@ import (
 
 	log "github.com/astaxie/beego/logs"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/ohmq/ohmyqueue/config"
 )
 
 type Etcd struct {
@@ -15,7 +16,7 @@ type Etcd struct {
 
 func NewEtcd() *Etcd {
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"172.27.31.156:12379", "172.27.31.156:22379", "172.27.31.156:32379"},
+		Endpoints:   config.Conf.Etcd.Addr,
 		DialTimeout: time.Second * 5,
 	})
 	if err != nil {

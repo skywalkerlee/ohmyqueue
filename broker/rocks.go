@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/astaxie/beego/logs"
+	"github.com/ohmq/ohmyqueue/config"
 	"github.com/tecbot/gorocksdb"
 )
 
@@ -13,7 +14,8 @@ func newDB() *gorocksdb.DB {
 	opts := gorocksdb.NewDefaultOptions()
 	opts.SetBlockBasedTableFactory(bbto)
 	opts.SetCreateIfMissing(true)
-	db, err := gorocksdb.OpenDb(opts, "./omq.log")
+	db, err := gorocksdb.OpenDb(opts, config.Conf.Omq.Logdir+"omq.db")
+	logs.Info(config.Conf.Omq.Logdir + "omq.db")
 	if err != nil {
 		logs.Info(err)
 		os.Exit(1)
