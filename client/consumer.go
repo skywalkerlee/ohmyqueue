@@ -55,6 +55,7 @@ func main() {
 	logs.EnableFuncCallDepth(true)
 	logs.SetLogFuncCallDepth(3)
 	cli := newcli()
+	defer cli.etcdcli.Close()
 	getresp, _ := cli.etcdcli.Get(context.TODO(), "leader")
 	conn, _ := grpc.Dial(string(getresp.Kvs[0].Value), grpc.WithInsecure())
 	cli.client = clientrpc.NewOmqClient(conn)
