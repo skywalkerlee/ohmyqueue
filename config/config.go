@@ -18,6 +18,9 @@ type Config struct {
 		Timeout    int    `toml:"timeout"`
 		Logdir     string `toml:"logdir"`
 	} `toml:"omq"`
+	Topic struct {
+		Alivetime int `toml:"alivetime"`
+	} `toml:"topic"`
 }
 
 var Conf Config
