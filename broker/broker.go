@@ -82,6 +82,10 @@ func (broker *Broker) Put(body string) {
 	}
 }
 
+func (broker *Broker) Del(offset string) {
+	delete(broker.msg, offset)
+}
+
 func (broker *Broker) Len() int {
 	return len(broker.msg)
 }

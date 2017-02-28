@@ -4,6 +4,13 @@ package inrpc;
 
 service In{
     rpc SyncMsg(stream Msg) returns (StatusCode){}
+    rpc Del(DelMsg) returns (StatusCode){}
+}
+
+
+message DelMsg{
+    string topic=1;
+    string offset=2;
 }
 
 message Msg{
