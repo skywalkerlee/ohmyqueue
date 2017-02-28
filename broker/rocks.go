@@ -48,3 +48,12 @@ func (broker *Broker) dump(key, value string) {
 		logs.Error(err)
 	}
 }
+
+func (broker *Broker) clean(key string) {
+	wo := gorocksdb.NewDefaultWriteOptions()
+	defer wo.Destroy()
+	err := broker.db.Delete(wo, []byte(key))
+	if err != nil {
+		logs.Error(err)
+	}
+}
