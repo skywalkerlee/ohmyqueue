@@ -1,11 +1,13 @@
 package msg
 
-type Header struct {
-	Len      int
-	Deadline int64
+type message struct {
+	alivetime string
+	body      string
 }
 
-type Msg struct {
-	Header Header
-	Body   string
+func newMessage(alivetime, body string) *message {
+	return &message{
+		alivetime: alivetime,
+		body:      body,
+	}
 }
