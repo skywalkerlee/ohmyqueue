@@ -1,9 +1,9 @@
 package msg
 
-type Topics map[string]topic
+type Topics map[string]*topic
 
 func NewTopics() Topics {
-	topics := make(map[string]topic)
+	topics := make(map[string]*topic)
 	return topics
 }
 
