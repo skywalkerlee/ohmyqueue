@@ -51,7 +51,8 @@ func (cli *cli) poll(offset string) *clientrpc.Resp {
 	return resp
 }
 
-func main() {
+//main
+func test1() {
 	logs.EnableFuncCallDepth(true)
 	logs.SetLogFuncCallDepth(3)
 	cli := newcli()

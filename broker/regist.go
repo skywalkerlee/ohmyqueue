@@ -18,6 +18,26 @@ func (broker *Broker) Start() {
 	broker.watchLeader()
 }
 
+func (broker *Broker) watchTopics() {
+	wch := broker.Client.Watch(context.TODO(), "topic", clientv3.WithPrefix())
+	for wresp := range wch {
+		for _, ev := range wresp.Events {
+			switch ev.Type.String() {
+			case "PUT":
+				logs.Info("creat broker:", string(ev.Kv.Value))
+				broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
+				logs.Info("all brokers:")
+				broker.sync(string(ev.Kv.Value))
+				for k, v := range broker.members {
+					logs.Info(k, v)
+				}
+			case "DELETE":
+				delete(broker.members, string(ev.Kv.Key))
+			}
+		}
+	}
+}
+
 func (broker *Broker) heartbeat(key, value string, timeout int64) {
 	resp, err := broker.Client.Grant(context.TODO(), timeout)
 	if err != nil {
