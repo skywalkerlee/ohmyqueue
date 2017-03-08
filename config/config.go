@@ -26,6 +26,10 @@ type Config struct {
 var Conf Config
 
 func init() {
+	logs.SetLogger("console")
+	logs.SetLogger(logs.AdapterFile, `{"filename":"`+Conf.Omq.Logdir+`omq.log"}`)
+	logs.EnableFuncCallDepth(true)
+	logs.SetLogFuncCallDepth(3)
 	if _, err := toml.DecodeFile("./omq.conf", &Conf); err != nil {
 		logs.Error(err)
 		os.Exit(1)

@@ -21,6 +21,6 @@ func main() {
 	etcd := etcd.NewEtcd()
 	defer etcd.Client.Close()
 	etcd.Client.Txn(context.TODO()).
-		If(clientv3.Compare(clientv3.CreateRevision("topic"+os.Args[1]), "=", "0")).
+		If(clientv3.Compare(clientv3.CreateRevision("topic"+os.Args[1]), "=", 0)).
 		Then(clientv3.OpPut("topic"+os.Args[1], time.Now().String())).Commit()
 }

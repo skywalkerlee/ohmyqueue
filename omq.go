@@ -15,10 +15,6 @@ import (
 )
 
 func main() {
-	log.SetLogger("console")
-	log.SetLogger(log.AdapterFile, `{"filename":"`+config.Conf.Omq.Logdir+`omq.log"}`)
-	log.EnableFuncCallDepth(true)
-	log.SetLogFuncCallDepth(3)
 	broker := broker.NewBroker(config.Conf.Omq.Index, config.Conf.Omq.Clientport, config.Conf.Omq.Innerport)
 	go broker.Start()
 	lis, err := net.Listen("tcp", ":"+config.Conf.Omq.Clientport)

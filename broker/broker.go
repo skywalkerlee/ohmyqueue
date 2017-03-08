@@ -30,6 +30,7 @@ type Broker struct {
 	msg        map[string]string
 	lock       *sync.Mutex
 	db         *gorocksdb.DB
+	topics     []string
 	// ldtopic    map[string]map[string]string
 	// mbtopic    map[string]map[string]string
 }
@@ -44,7 +45,7 @@ func NewBroker(id int, cliport string, inport string) *Broker {
 			}
 		}
 	}
-
+	var ts []string
 	return &Broker{
 		id:         id,
 		Client:     etcd.NewEtcd().Client,
@@ -55,6 +56,7 @@ func NewBroker(id int, cliport string, inport string) *Broker {
 		msg:        make(map[string]string),
 		lock:       new(sync.Mutex),
 		db:         newDB(),
+		topics:     ts,
 	}
 }
 

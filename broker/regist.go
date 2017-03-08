@@ -15,7 +15,20 @@ import (
 func (broker *Broker) Start() {
 	broker.load()
 	go broker.heartbeat("broker"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, 5)
-	broker.watchLeader()
+	go broker.watchLeader()
+	broker.getTopics()
+	broker.watchTopics()
+}
+
+func (broker *Broker) getTopics() {
+	resp, _ := broker.Client.Get(context.TODO(), "topic", clientv3.WithPrefix())
+	for _, v := range resp.Kvs {
+		broker.topics = append(broker.topics, string(v.Key))
+	}
+	logs.Info("all topic:")
+	for k, v := range broker.topics {
+		logs.Info(k, v)
+	}
 }
 
 func (broker *Broker) watchTopics() {
@@ -24,15 +37,14 @@ func (broker *Broker) watchTopics() {
 		for _, ev := range wresp.Events {
 			switch ev.Type.String() {
 			case "PUT":
-				logs.Info("creat broker:", string(ev.Kv.Value))
-				broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
-				logs.Info("all brokers:")
-				broker.sync(string(ev.Kv.Value))
-				for k, v := range broker.members {
+				logs.Info("creat topic:", string(ev.Kv.Value))
+				broker.topics = append(broker.topics, string(ev.Kv.Value))
+				logs.Info("all topic:")
+				for k, v := range broker.topics {
 					logs.Info(k, v)
 				}
 			case "DELETE":
-				delete(broker.members, string(ev.Kv.Key))
+
 			}
 		}
 	}
