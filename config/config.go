@@ -15,7 +15,7 @@ type Config struct {
 		Index      int    `toml:"index"`
 		Clientport string `toml:"clientport"`
 		Innerport  string `toml:"innerport"`
-		Timeout    int    `toml:"timeout"`
+		Timeout    int64  `toml:"timeout"`
 		Logdir     string `toml:"logdir"`
 	} `toml:"omq"`
 	Topic struct {

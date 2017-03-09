@@ -10,31 +10,42 @@ import (
 	"github.com/coreos/etcd/clientv3"
 
 	"strconv"
+
+	"github.com/ohmq/ohmyqueue/config"
 )
 
 func (broker *Broker) Start() {
 	broker.load()
-	go broker.heartbeat("broker"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, 5)
-	go broker.watchLeader()
-	broker.watchTopics()
+	go broker.heartbeat()
+	// go broker.watchLeader()
+	// broker.watchTopics()
+	go broker.watchBrokers()
+	go broker.watchTopics()
+	broker.watchTopicLeader()
 }
 
-func (broker *Broker) heartbeat(key, value string, timeout int64) {
-	resp, err := broker.Client.Grant(context.TODO(), timeout)
+func (broker *Broker) heartbeat() {
+	resp, err := broker.Client.Grant(context.TODO(), config.Conf.Omq.Timeout)
 	if err != nil {
 		logs.Error(err)
-		os.Exit(1)
 	}
-	_, err = broker.Client.Put(context.TODO(), key, value, clientv3.WithLease(resp.ID))
+	_, err = broker.Client.Put(context.TODO(), "brokerid"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, clientv3.WithLease(resp.ID))
 	if err != nil {
 		logs.Error(err)
-		os.Exit(1)
+	}
+	_, err = broker.Client.Put(context.TODO(), "brokerleader"+strconv.Itoa(broker.id), strconv.Itoa(len(broker.leaders)), clientv3.WithLease(resp.ID))
+	if err != nil {
+		logs.Error(err)
 	}
 	for {
 		select {
-		case <-time.After(time.Second * 4):
+		case <-time.After(time.Second * time.Duration((config.Conf.Omq.Timeout - 2))):
 			logs.Info("hearbeat")
 			_, err = broker.Client.KeepAliveOnce(context.TODO(), resp.ID)
+			_, err = broker.Client.Put(context.TODO(), "brokerleader"+strconv.Itoa(broker.id), strconv.Itoa(len(broker.leaders)))
+			if err != nil {
+				logs.Error(err)
+			}
 			if err != nil {
 				logs.Error(err)
 				os.Exit(1)
@@ -74,7 +85,7 @@ func (broker *Broker) vote() {
 	case <-broker.votechan:
 		return
 	case <-time.After(time.Duration(rand.New(rand.NewSource(time.Now().Unix())).Intn(200)) * time.Millisecond):
-		resp, err := broker.Client.Grant(context.TODO(), 5)
+		resp, err := broker.Client.Grant(context.TODO(), config.Conf.Omq.Timeout)
 		if err != nil {
 			logs.Error(err)
 			os.Exit(1)
@@ -91,7 +102,7 @@ func (broker *Broker) vote() {
 
 func (broker *Broker) leaderhearbeat(resp *clientv3.LeaseGrantResponse) {
 	for {
-		<-time.After(time.Second * 4)
+		<-time.After(time.Second * time.Duration((config.Conf.Omq.Timeout - 2)))
 		logs.Info("leaderhearbeat")
 		_, err := broker.Client.KeepAliveOnce(context.TODO(), resp.ID)
 		if err != nil {
