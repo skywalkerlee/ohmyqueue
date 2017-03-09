@@ -3,14 +3,14 @@ package server
 import (
 	"io"
 
-	"golang.org/x/net/context"
-
 	"github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/broker"
 	"github.com/ohmq/ohmyqueue/inrpc"
+	"github.com/ohmq/ohmyqueue/msg"
 )
 
 type InrpcServer struct {
+	topics msg.Topics
 	Broker *broker.Broker
 }
 
@@ -27,11 +27,6 @@ func (inserver *InrpcServer) SyncMsg(steam inrpc.In_SyncMsgServer) error {
 		}
 		sum++
 		logs.Info(msg.GetBody())
-		inserver.Broker.Put(msg.GetBody())
+		inserver.topics.Put(msg.GetTopic(), msg.GetAlivetime(), msg.GetBody(), msg.GetOffset())
 	}
-}
-
-func (inserver *InrpcServer) Del(ctx context.Context, delmsg *inrpc.DelMsg) (*inrpc.StatusCode, error) {
-	inserver.Broker.Del(delmsg.GetOffset())
-	return &inrpc.StatusCode{Sum: 1}, nil
 }

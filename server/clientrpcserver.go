@@ -17,8 +17,7 @@ type RpcServer struct {
 func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg) (*clientrpc.StatusCode, error) {
 	log.Info("PutMsg")
 	log.Info(remotemsg.GetBody())
-	rpcserver.Broker.Put(remotemsg.GetBody())
-
+	//TODO
 	return &clientrpc.StatusCode{Code: 200, Offset: strconv.Itoa(rpcserver.Broker.Len())}, nil
 }
 

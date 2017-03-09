@@ -9,7 +9,6 @@ It is generated from these files:
 	in.proto
 
 It has these top-level messages:
-	DelMsg
 	Msg
 	StatusCode
 */
@@ -35,40 +34,17 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type DelMsg struct {
-	Topic  string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
-	Offset string `protobuf:"bytes,2,opt,name=offset" json:"offset,omitempty"`
-}
-
-func (m *DelMsg) Reset()                    { *m = DelMsg{} }
-func (m *DelMsg) String() string            { return proto.CompactTextString(m) }
-func (*DelMsg) ProtoMessage()               {}
-func (*DelMsg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *DelMsg) GetTopic() string {
-	if m != nil {
-		return m.Topic
-	}
-	return ""
-}
-
-func (m *DelMsg) GetOffset() string {
-	if m != nil {
-		return m.Offset
-	}
-	return ""
-}
-
 type Msg struct {
-	Topic  string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
-	Offset string `protobuf:"bytes,2,opt,name=offset" json:"offset,omitempty"`
-	Body   string `protobuf:"bytes,3,opt,name=body" json:"body,omitempty"`
+	Topic     string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
+	Offset    string `protobuf:"bytes,2,opt,name=offset" json:"offset,omitempty"`
+	Alivetime string `protobuf:"bytes,3,opt,name=alivetime" json:"alivetime,omitempty"`
+	Body      string `protobuf:"bytes,4,opt,name=body" json:"body,omitempty"`
 }
 
 func (m *Msg) Reset()                    { *m = Msg{} }
 func (m *Msg) String() string            { return proto.CompactTextString(m) }
 func (*Msg) ProtoMessage()               {}
-func (*Msg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*Msg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 func (m *Msg) GetTopic() string {
 	if m != nil {
@@ -80,6 +56,13 @@ func (m *Msg) GetTopic() string {
 func (m *Msg) GetOffset() string {
 	if m != nil {
 		return m.Offset
+	}
+	return ""
+}
+
+func (m *Msg) GetAlivetime() string {
+	if m != nil {
+		return m.Alivetime
 	}
 	return ""
 }
@@ -98,7 +81,7 @@ type StatusCode struct {
 func (m *StatusCode) Reset()                    { *m = StatusCode{} }
 func (m *StatusCode) String() string            { return proto.CompactTextString(m) }
 func (*StatusCode) ProtoMessage()               {}
-func (*StatusCode) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*StatusCode) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 func (m *StatusCode) GetSum() int32 {
 	if m != nil {
@@ -108,7 +91,6 @@ func (m *StatusCode) GetSum() int32 {
 }
 
 func init() {
-	proto.RegisterType((*DelMsg)(nil), "inrpc.DelMsg")
 	proto.RegisterType((*Msg)(nil), "inrpc.Msg")
 	proto.RegisterType((*StatusCode)(nil), "inrpc.StatusCode")
 }
@@ -125,7 +107,6 @@ const _ = grpc.SupportPackageIsVersion4
 
 type InClient interface {
 	SyncMsg(ctx context.Context, opts ...grpc.CallOption) (In_SyncMsgClient, error)
-	Del(ctx context.Context, in *DelMsg, opts ...grpc.CallOption) (*StatusCode, error)
 }
 
 type inClient struct {
@@ -170,20 +151,10 @@ func (x *inSyncMsgClient) CloseAndRecv() (*StatusCode, error) {
 	return m, nil
 }
 
-func (c *inClient) Del(ctx context.Context, in *DelMsg, opts ...grpc.CallOption) (*StatusCode, error) {
-	out := new(StatusCode)
-	err := grpc.Invoke(ctx, "/inrpc.In/Del", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Server API for In service
 
 type InServer interface {
 	SyncMsg(In_SyncMsgServer) error
-	Del(context.Context, *DelMsg) (*StatusCode, error)
 }
 
 func RegisterInServer(s *grpc.Server, srv InServer) {
@@ -216,33 +187,10 @@ func (x *inSyncMsgServer) Recv() (*Msg, error) {
 	return m, nil
 }
 
-func _In_Del_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DelMsg)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InServer).Del(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/inrpc.In/Del",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InServer).Del(ctx, req.(*DelMsg))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _In_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "inrpc.In",
 	HandlerType: (*InServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Del",
-			Handler:    _In_Del_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "SyncMsg",
@@ -256,17 +204,17 @@ var _In_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("in.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 186 bytes of a gzipped FileDescriptorProto
+	// 180 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xc8, 0xcc, 0xd3, 0x2b,
-	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xcd, 0xcc, 0x2b, 0x2a, 0x48, 0x56, 0x32, 0xe3, 0x62, 0x73,
-	0x49, 0xcd, 0xf1, 0x2d, 0x4e, 0x17, 0x12, 0xe1, 0x62, 0x2d, 0xc9, 0x2f, 0xc8, 0x4c, 0x96, 0x60,
-	0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x82, 0x70, 0x84, 0xc4, 0xb8, 0xd8, 0xf2, 0xd3, 0xd2, 0x8a, 0x53,
-	0x4b, 0x24, 0x98, 0xc0, 0xc2, 0x50, 0x9e, 0x92, 0x3b, 0x17, 0x33, 0xc9, 0x9a, 0x84, 0x84, 0xb8,
-	0x58, 0x92, 0xf2, 0x53, 0x2a, 0x25, 0x98, 0xc1, 0xa2, 0x60, 0xb6, 0x92, 0x1c, 0x17, 0x57, 0x70,
-	0x49, 0x62, 0x49, 0x69, 0xb1, 0x73, 0x7e, 0x4a, 0xaa, 0x90, 0x00, 0x17, 0x73, 0x71, 0x69, 0x2e,
-	0xd8, 0x34, 0xd6, 0x20, 0x10, 0xd3, 0x28, 0x96, 0x8b, 0xc9, 0x33, 0x4f, 0x48, 0x87, 0x8b, 0x3d,
-	0xb8, 0x32, 0x2f, 0x19, 0x64, 0x25, 0x97, 0x1e, 0xd8, 0xe5, 0x7a, 0xbe, 0xc5, 0xe9, 0x52, 0x82,
-	0x50, 0x36, 0xc2, 0x04, 0x25, 0x06, 0x0d, 0x46, 0x21, 0x4d, 0x2e, 0x66, 0x97, 0xd4, 0x1c, 0x21,
-	0x5e, 0xa8, 0x2c, 0xc4, 0x83, 0x58, 0x15, 0x27, 0xb1, 0x81, 0x43, 0xc3, 0x18, 0x10, 0x00, 0x00,
-	0xff, 0xff, 0x50, 0x5d, 0x1a, 0xdf, 0x19, 0x01, 0x00, 0x00,
+	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xcd, 0xcc, 0x2b, 0x2a, 0x48, 0x56, 0x4a, 0xe5, 0x62, 0xf6,
+	0x2d, 0x4e, 0x17, 0x12, 0xe1, 0x62, 0x2d, 0xc9, 0x2f, 0xc8, 0x4c, 0x96, 0x60, 0x54, 0x60, 0xd4,
+	0xe0, 0x0c, 0x82, 0x70, 0x84, 0xc4, 0xb8, 0xd8, 0xf2, 0xd3, 0xd2, 0x8a, 0x53, 0x4b, 0x24, 0x98,
+	0xc0, 0xc2, 0x50, 0x9e, 0x90, 0x0c, 0x17, 0x67, 0x62, 0x4e, 0x66, 0x59, 0x6a, 0x49, 0x66, 0x6e,
+	0xaa, 0x04, 0x33, 0x58, 0x0a, 0x21, 0x20, 0x24, 0xc4, 0xc5, 0x92, 0x94, 0x9f, 0x52, 0x29, 0xc1,
+	0x02, 0x96, 0x00, 0xb3, 0x95, 0xe4, 0xb8, 0xb8, 0x82, 0x4b, 0x12, 0x4b, 0x4a, 0x8b, 0x9d, 0xf3,
+	0x53, 0x52, 0x85, 0x04, 0xb8, 0x98, 0x8b, 0x4b, 0x73, 0xc1, 0x76, 0xb1, 0x06, 0x81, 0x98, 0x46,
+	0x46, 0x5c, 0x4c, 0x9e, 0x79, 0x42, 0x3a, 0x5c, 0xec, 0xc1, 0x95, 0x79, 0xc9, 0x20, 0x07, 0x71,
+	0xe9, 0x81, 0xdd, 0xa7, 0xe7, 0x5b, 0x9c, 0x2e, 0x25, 0x08, 0x65, 0x23, 0x4c, 0x50, 0x62, 0xd0,
+	0x60, 0x4c, 0x62, 0x03, 0x7b, 0xc4, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0xf0, 0xb0, 0x67, 0x90,
+	0xd4, 0x00, 0x00, 0x00,
 }

@@ -1,0 +1,8 @@
+syntax="proto2";
+
+package msg;
+
+message Msg{
+    required string alivetime=1;
+    required string body=2;
+}
