@@ -8,7 +8,7 @@ func NewTopics() Topics {
 }
 
 func (topics Topics) AddTopic(name string) {
-	topics[name] = newTopic()
+	topics[name] = newTopic(name)
 }
 
 func (topics Topics) Put(topic, alivetime, body string) {

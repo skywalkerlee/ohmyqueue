@@ -15,7 +15,6 @@ import (
 )
 
 func (broker *Broker) Start() {
-	broker.load()
 	go broker.heartbeat()
 	// go broker.watchLeader()
 	// broker.watchTopics()
@@ -135,7 +134,6 @@ func (broker *Broker) watchmembers() {
 				logs.Info("creat broker:", string(ev.Kv.Value))
 				broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
 				logs.Info("all brokers:")
-				broker.sync(string(ev.Kv.Value))
 				for k, v := range broker.members {
 					logs.Info(k, v)
 				}

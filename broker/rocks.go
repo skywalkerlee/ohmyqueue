@@ -23,37 +23,37 @@ func newDB() *gorocksdb.DB {
 	return db
 }
 
-func (broker *Broker) load() {
-	ro := gorocksdb.NewDefaultReadOptions()
-	defer ro.Destroy()
-	ro.SetFillCache(false)
-	it := broker.db.NewIterator(ro)
-	defer it.Close()
-	it.SeekToFirst()
-	for it = it; it.Valid(); it.Next() {
-		broker.msg[string(it.Key().Data())] = string(it.Value().Data())
-		it.Key().Free()
-		it.Value().Free()
-	}
-	if err := it.Err(); err != nil {
-		logs.Error(err)
-	}
-}
+// func (broker *Broker) load() {
+// 	ro := gorocksdb.NewDefaultReadOptions()
+// 	defer ro.Destroy()
+// 	ro.SetFillCache(false)
+// 	it := broker.db.NewIterator(ro)
+// 	defer it.Close()
+// 	it.SeekToFirst()
+// 	for it = it; it.Valid(); it.Next() {
+// 		broker.msg[string(it.Key().Data())] = string(it.Value().Data())
+// 		it.Key().Free()
+// 		it.Value().Free()
+// 	}
+// 	if err := it.Err(); err != nil {
+// 		logs.Error(err)
+// 	}
+// }
 
-func (broker *Broker) dump(key, value string) {
-	wo := gorocksdb.NewDefaultWriteOptions()
-	defer wo.Destroy()
-	err := broker.db.Put(wo, []byte(key), []byte(value))
-	if err != nil {
-		logs.Error(err)
-	}
-}
+// func (broker *Broker) dump(key, value string) {
+// 	wo := gorocksdb.NewDefaultWriteOptions()
+// 	defer wo.Destroy()
+// 	err := broker.db.Put(wo, []byte(key), []byte(value))
+// 	if err != nil {
+// 		logs.Error(err)
+// 	}
+// }
 
-func (broker *Broker) clean(key string) {
-	wo := gorocksdb.NewDefaultWriteOptions()
-	defer wo.Destroy()
-	err := broker.db.Delete(wo, []byte(key))
-	if err != nil {
-		logs.Error(err)
-	}
-}
+// func (broker *Broker) clean(key string) {
+// 	wo := gorocksdb.NewDefaultWriteOptions()
+// 	defer wo.Destroy()
+// 	err := broker.db.Delete(wo, []byte(key))
+// 	if err != nil {
+// 		logs.Error(err)
+// 	}
+// }
