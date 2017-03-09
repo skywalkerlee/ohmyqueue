@@ -14,15 +14,14 @@ import (
 func (broker *Broker) watchTopics() {
 	resp, _ := broker.Client.Get(context.TODO(), "topicname", clientv3.WithPrefix())
 	for _, v := range resp.Kvs {
-		broker.topics = append(broker.topics, string(v.Key))
+		broker.topics.AddTopic(string(v.Key[9:]))
 	}
 	wch := broker.Client.Watch(context.TODO(), "topicname", clientv3.WithPrefix())
 	for wresp := range wch {
 		for _, ev := range wresp.Events {
 			switch ev.Type.String() {
 			case "PUT":
-				logs.Info("creat topic:", string(ev.Kv.Key))
-				broker.topics = append(broker.topics, string(ev.Kv.Key))
+				broker.topics.AddTopic(string(ev.Kv.Key[9:]))
 				resp, _ := broker.Client.Get(context.TODO(), "brokerleader", clientv3.WithPrefix())
 				var sum int
 				for _, v := range resp.Kvs {
@@ -84,6 +83,9 @@ func (broker *Broker) watchBrokers() {
 	for _, v := range resp.Kvs {
 		if string(v.Key) != "broker"+strconv.Itoa(broker.id) {
 			broker.members[string(v.Key)] = string(v.Value)
+			mc, msgch := makeconn(string(v.Value))
+			broker.tmpch = append(broker.tmpch, msgch)
+			go sync(mc, msgch)
 		}
 	}
 	wch := broker.Client.Watch(context.TODO(), "brokerid", clientv3.WithPrefix())
@@ -93,7 +95,9 @@ func (broker *Broker) watchBrokers() {
 			case "PUT":
 				logs.Info("creat broker:", string(ev.Kv.Value))
 				broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
-				//TODO: sync
+				mc, msgch := makeconn(string(ev.Kv.Value))
+				broker.tmpch = append(broker.tmpch, msgch)
+				go sync(mc, msgch)
 			case "DELETE":
 				delete(broker.members, string(ev.Kv.Key))
 			}

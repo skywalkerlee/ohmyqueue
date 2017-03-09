@@ -69,7 +69,6 @@ func (broker *Broker) watchLeader() {
 				logs.Info("leader is:", string(ev.Kv.Value))
 				if broker.leader != string(ev.Kv.Value) {
 					broker.leader = string(ev.Kv.Value)
-					broker.votechan <- struct{}{}
 				}
 			case "DELETE":
 				go broker.vote()
@@ -81,8 +80,6 @@ func (broker *Broker) watchLeader() {
 func (broker *Broker) vote() {
 	logs.Info("I am voting")
 	select {
-	case <-broker.votechan:
-		return
 	case <-time.After(time.Duration(rand.New(rand.NewSource(time.Now().Unix())).Intn(200)) * time.Millisecond):
 		resp, err := broker.Client.Grant(context.TODO(), config.Conf.Omq.Timeout)
 		if err != nil {

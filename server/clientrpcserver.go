@@ -3,8 +3,6 @@ package server
 import (
 	"golang.org/x/net/context"
 
-	"strconv"
-
 	log "github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/broker"
 	"github.com/ohmq/ohmyqueue/clientrpc"
@@ -18,15 +16,12 @@ func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg
 	log.Info("PutMsg")
 	log.Info(remotemsg.GetBody())
 	//TODO
-	return &clientrpc.StatusCode{Code: 200, Offset: strconv.Itoa(rpcserver.Broker.Len())}, nil
+	return &clientrpc.StatusCode{Code: 200, Offset: "1"}, nil
 }
 
 func (rpcserver *RpcServer) Poll(ctx context.Context, req *clientrpc.Req) (*clientrpc.Resp, error) {
-	body, err := rpcserver.Broker.Get(req.GetOffset())
-	if err == nil {
-		return &clientrpc.Resp{Offset: req.GetOffset(), Msg: body}, err
-	}
-	return nil, err
+
+	return nil, nil
 }
 
 // func (self *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg) (*clientrpc.StatusCode, error) {
