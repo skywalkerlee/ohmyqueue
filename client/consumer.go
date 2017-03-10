@@ -32,21 +32,22 @@ func main() {
 	if resp.Count != 0 {
 		offmax, _ := strconv.Atoi(strings.Split(string(resp.Kvs[0].Value), ":")[0])
 		off := 0
-		for ; off < offmax; off++ {
+		for off <= offmax {
 			resp, _ := client.Poll(context.TODO(), &clientrpc.Req{Topic: os.Args[1], Offset: int64(off)})
 			logs.Info(resp.GetOffset(), resp.GetBody())
+			off = int(resp.GetOffset()) + 1
 		}
-	} else {
-		wch := etcd.Client.Watch(context.TODO(), "topicattr"+os.Args[1])
-		for wresp := range wch {
-			for _, ev := range wresp.Events {
-				switch ev.Type.String() {
-				case "PUT":
-					offmax, _ := strconv.ParseInt((strings.Split(string(ev.Kv.Value), ":")[0]), 10, 64)
-					resp, _ := client.Poll(context.TODO(), &clientrpc.Req{Topic: os.Args[1], Offset: offmax})
-					logs.Info(resp.GetOffset(), resp.GetBody())
-				}
+	}
+	wch := etcd.Client.Watch(context.TODO(), "topicattr"+os.Args[1])
+	for wresp := range wch {
+		for _, ev := range wresp.Events {
+			switch ev.Type.String() {
+			case "PUT":
+				offmax, _ := strconv.ParseInt((strings.Split(string(ev.Kv.Value), ":")[0]), 10, 64)
+				resp, _ := client.Poll(context.TODO(), &clientrpc.Req{Topic: os.Args[1], Offset: offmax})
+				logs.Info(resp.GetOffset(), resp.GetBody())
 			}
 		}
 	}
+
 }

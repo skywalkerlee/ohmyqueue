@@ -58,14 +58,14 @@ func (topic *topic) load() {
 	}
 }
 
-func (topic *topic) put(alivetime, body string, offset ...int64) int64 {
+func (topic *topic) put(alivetime, body string, offset ...int64) (off int64) {
 	if len(offset) != 0 {
 		tmp := newMessage(alivetime, body)
 		topic.mutex.Lock()
 		topic.msg[offset[0]] = tmp
 		topic.mutex.Unlock()
 		topic.dump(offset[0], tmp)
-		return offset[0]
+		off = offset[0]
 	} else {
 		tmp := newMessage(alivetime, body)
 		topic.mutex.Lock()
@@ -73,8 +73,9 @@ func (topic *topic) put(alivetime, body string, offset ...int64) int64 {
 		topic.offset++
 		topic.mutex.Unlock()
 		topic.dump(int64(len(topic.msg)), tmp)
-		return topic.offset - 1
+		off = topic.offset - 1
 	}
+	return
 }
 
 func (topic *topic) get(offset int64) (off int64, message *message) {
