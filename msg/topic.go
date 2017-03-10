@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego/logs"
 	"github.com/golang/protobuf/proto"
+	"github.com/ohmq/ohmyqueue/inrpc"
 	"github.com/tecbot/gorocksdb"
 )
 
@@ -39,7 +40,9 @@ func (topic *topic) load() {
 		if err != nil {
 			logs.Error(err)
 		}
-		topic.put(tmp.GetAlivetime(), tmp.GetBody())
+		topic.mutex.Lock()
+		topic.msg[string(it.Key().Data())] = newMessage(tmp.GetAlivetime(), tmp.GetBody())
+		topic.mutex.Unlock()
 		it.Key().Free()
 		it.Value().Free()
 	}
@@ -109,4 +112,18 @@ func (topic *topic) clean() {
 			}
 		}
 	}
+}
+
+func (topic *topic) getall() []*inrpc.Msg {
+	var msgs = make([]*inrpc.Msg, 100)
+	topicname := topic.rocks.Name()[10:13]
+	for offset, body := range topic.msg {
+		msgs = append(msgs, &inrpc.Msg{
+			Topic:     topicname,
+			Offset:    offset,
+			Alivetime: body.alivetime,
+			Body:      body.body,
+		})
+	}
+	return msgs
 }

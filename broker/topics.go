@@ -6,9 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/astaxie/beego/logs"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/ohmq/ohmyqueue/config"
+	"github.com/ohmq/ohmyqueue/inrpc"
 )
 
 func (broker *Broker) watchTopics() {
@@ -81,11 +84,11 @@ func (broker *Broker) topicLeaderHeartbeat(resp *clientv3.LeaseGrantResponse, na
 func (broker *Broker) watchBrokers() {
 	resp, _ := broker.Client.Get(context.TODO(), "brokerid", clientv3.WithPrefix())
 	for _, v := range resp.Kvs {
-		if string(v.Key) != "broker"+strconv.Itoa(broker.id) {
+		if string(v.Key) != "brokerid"+strconv.Itoa(broker.id) {
 			broker.members[string(v.Key)] = string(v.Value)
 			mc, msgch := makeconn(string(v.Value))
-			broker.tmpch = append(broker.tmpch, msgch)
-			go sync(mc, msgch)
+			broker.tmpch[string(v.Key)] = msgch
+			go putfollow(mc, msgch)
 		}
 	}
 	wch := broker.Client.Watch(context.TODO(), "brokerid", clientv3.WithPrefix())
@@ -93,14 +96,50 @@ func (broker *Broker) watchBrokers() {
 		for _, ev := range wresp.Events {
 			switch ev.Type.String() {
 			case "PUT":
-				logs.Info("creat broker:", string(ev.Kv.Value))
-				broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
-				mc, msgch := makeconn(string(ev.Kv.Value))
-				broker.tmpch = append(broker.tmpch, msgch)
-				go sync(mc, msgch)
+				if string(ev.Kv.Key) != "brokerid"+strconv.Itoa(broker.id) {
+					logs.Info("creat broker:", string(ev.Kv.Value))
+					broker.members[string(ev.Kv.Key)] = string(ev.Kv.Value)
+					mc, msgch := makeconn(string(ev.Kv.Value))
+					broker.tmpch[string(ev.Kv.Key)] = msgch
+					go putfollow(mc, msgch)
+					go broker.sync(msgch)
+				}
 			case "DELETE":
+				close(broker.tmpch[string(ev.Kv.Key)])
+				delete(broker.tmpch, string(ev.Kv.Key))
 				delete(broker.members, string(ev.Kv.Key))
 			}
+		}
+	}
+}
+
+func makeconn(ip string) (inrpc.In_SyncMsgClient, chan *inrpc.Msg) {
+	conn, _ := grpc.Dial(ip, grpc.WithInsecure())
+	c := inrpc.NewInClient(conn)
+	mc, _ := c.SyncMsg(context.TODO())
+	msgch := make(chan *inrpc.Msg, 1000)
+	return mc, msgch
+}
+
+func putfollow(mc inrpc.In_SyncMsgClient, msgch chan *inrpc.Msg) {
+	for {
+		msg, ok := <-msgch
+		if ok {
+			err := mc.Send(msg)
+			if err != nil {
+				logs.Error(err)
+				continue
+			}
+		} else {
+			return
+		}
+	}
+}
+
+func (broker *Broker) sync(msgch chan *inrpc.Msg) {
+	for _, v := range broker.leaders {
+		for _, msg := range broker.topics.GetAll(v) {
+			msgch <- msg
 		}
 	}
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type InrpcServer struct {
-	broker *broker.Broker
+	Broker *broker.Broker
 }
 
 func (inserver *InrpcServer) SyncMsg(steam inrpc.In_SyncMsgServer) error {
@@ -25,6 +25,6 @@ func (inserver *InrpcServer) SyncMsg(steam inrpc.In_SyncMsgServer) error {
 		}
 		sum++
 		logs.Info(msg.GetBody())
-		inserver.broker.Put(msg.GetTopic(), msg.GetAlivetime(), msg.GetBody(), msg.GetOffset())
+		inserver.Broker.Put(msg.GetTopic(), msg.GetAlivetime(), msg.GetBody(), msg.GetOffset())
 	}
 }

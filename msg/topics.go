@@ -1,5 +1,9 @@
 package msg
 
+import (
+	"github.com/ohmq/ohmyqueue/inrpc"
+)
+
 type Topics map[string]*topic
 
 func NewTopics() Topics {
@@ -17,6 +21,10 @@ func (topics Topics) Put(topic, alivetime, body string, offset ...string) {
 	topics[topic].put(alivetime, body, offset...)
 }
 
-func (topics Topics) Get(topic, offset string) *message {
-	return topics[topic].get(offset)
+func (topics Topics) Get(topic, offset string) string {
+	return topics[topic].get(offset).body
+}
+
+func (topics Topics) GetAll(topic string) []*inrpc.Msg {
+	return topics[topic].getall()
 }

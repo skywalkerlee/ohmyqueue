@@ -9,21 +9,20 @@ service Omq{
 
 
 message Req{
-    string offset=1;
+    string topic=1;
+    string offset=2;
 }
 
 
 message Msg{
-    string offset=1;
+    string topic=1;
     string body=2;
 }
 
 message Resp{
-    string offset=1;
-    string msg=2;
+    string body=1;
 }
 
 message StatusCode{
     int32 code=1;
-    string offset=2;
 }

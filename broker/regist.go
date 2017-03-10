@@ -16,8 +16,6 @@ import (
 
 func (broker *Broker) Start() {
 	go broker.heartbeat()
-	// go broker.watchLeader()
-	// broker.watchTopics()
 	go broker.watchBrokers()
 	go broker.watchTopics()
 	broker.watchTopicLeader()
@@ -41,7 +39,7 @@ func (broker *Broker) heartbeat() {
 		case <-time.After(time.Second * time.Duration((config.Conf.Omq.Timeout - 2))):
 			logs.Info("hearbeat")
 			_, err = broker.Client.KeepAliveOnce(context.TODO(), resp.ID)
-			_, err = broker.Client.Put(context.TODO(), "brokerleader"+strconv.Itoa(broker.id), strconv.Itoa(len(broker.leaders)))
+			_, err = broker.Client.Put(context.TODO(), "brokerleader"+strconv.Itoa(broker.id), strconv.Itoa(len(broker.leaders)), clientv3.WithLease(resp.ID))
 			if err != nil {
 				logs.Error(err)
 			}

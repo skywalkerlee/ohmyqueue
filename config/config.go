@@ -19,7 +19,7 @@ type Config struct {
 		Logdir     string `toml:"logdir"`
 	} `toml:"omq"`
 	Topic struct {
-		Alivetime int `toml:"alivetime"`
+		Alivetime int64 `toml:"alivetime"`
 	} `toml:"topic"`
 }
 

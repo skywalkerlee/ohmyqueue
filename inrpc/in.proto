@@ -3,7 +3,7 @@ syntax="proto3";
 package inrpc;
 
 service In{
-    rpc SyncMsg(stream Msg) returns (StatusCode){}
+    rpc SyncMsg(stream Msg) returns (StatusCode){};
 }
 
 
