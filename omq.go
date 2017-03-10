@@ -2,6 +2,8 @@ package main
 
 import (
 	"net"
+	"os/signal"
+	"syscall"
 
 	"os"
 
@@ -32,5 +34,9 @@ func main() {
 	}
 	s2 := grpc.NewServer()
 	inrpc.RegisterInServer(s2, &server.InrpcServer{Broker: broker})
-	s2.Serve(lis2)
+	go s2.Serve(lis2)
+	sigch := make(chan os.Signal)
+	signal.Notify(sigch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
+	<-sigch
+	broker.Stop()
 }

@@ -1,8 +1,6 @@
 package msg
 
 import (
-	"os"
-
 	"github.com/astaxie/beego/logs"
 	"github.com/ohmq/ohmyqueue/config"
 	"github.com/tecbot/gorocksdb"
@@ -18,7 +16,6 @@ func newDB(name string) *gorocksdb.DB {
 	logs.Info(config.Conf.Omq.Logdir + name + ".db")
 	if err != nil {
 		logs.Info(err)
-		os.Exit(1)
 	}
 	return db
 }

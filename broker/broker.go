@@ -3,10 +3,15 @@ package broker
 import (
 	"net"
 
+	"strconv"
+
+	"time"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/ohmq/ohmyqueue/etcd"
 	"github.com/ohmq/ohmyqueue/inrpc"
 	"github.com/ohmq/ohmyqueue/msg"
+	"golang.org/x/net/context"
 )
 
 type Broker struct {
@@ -46,26 +51,28 @@ func NewBroker(id int, cliport string, inport string) *Broker {
 	}
 }
 
-func (broker *Broker) Close() {
+func (broker *Broker) Stop() {
 	broker.Client.Close()
+	broker.topics.Close()
 }
 
-func (broker *Broker) Put(topic, alivetime, body string, offset ...string) {
-	if len(offset) == 0 {
-		broker.topics.Put(topic, alivetime, body)
-	} else {
+func (broker *Broker) Put(topic, alivetime, body string, offset ...int64) {
+	if len(offset) != 0 {
 		broker.topics.Put(topic, alivetime, body, offset...)
+	} else {
+		off := broker.topics.Put(topic, alivetime, body)
 		for _, msgch := range broker.tmpch {
 			msgch <- &inrpc.Msg{
 				Topic:     topic,
-				Offset:    offset[0],
+				Offset:    off,
 				Alivetime: alivetime,
 				Body:      body,
 			}
 		}
+		broker.Client.Put(context.TODO(), "topicattr"+topic, strconv.FormatInt(off, 10)+":"+strconv.FormatInt(time.Now().Unix(), 10))
 	}
 }
 
-func (broker *Broker) Get(topic, offset string) string {
+func (broker *Broker) Get(topic string, offset int64) (int64, string) {
 	return broker.topics.Get(topic, offset)
 }

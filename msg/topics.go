@@ -17,14 +17,21 @@ func (topics Topics) AddTopic(name string) {
 	go topics[name].clean()
 }
 
-func (topics Topics) Put(topic, alivetime, body string, offset ...string) {
-	topics[topic].put(alivetime, body, offset...)
+func (topics Topics) Put(topic, alivetime, body string, offset ...int64) int64 {
+	return topics[topic].put(alivetime, body, offset...)
 }
 
-func (topics Topics) Get(topic, offset string) string {
-	return topics[topic].get(offset).body
+func (topics Topics) Get(topic string, offset int64) (int64, string) {
+	off, tmp := topics[topic].get(offset)
+	return off, tmp.body
 }
 
 func (topics Topics) GetAll(topic string) []*inrpc.Msg {
 	return topics[topic].getall()
+}
+
+func (topics Topics) Close() {
+	for _, v := range topics {
+		v.rocks.Close()
+	}
 }

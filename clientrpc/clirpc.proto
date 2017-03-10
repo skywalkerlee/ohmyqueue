@@ -10,7 +10,7 @@ service Omq{
 
 message Req{
     string topic=1;
-    string offset=2;
+    int64 offset=2;
 }
 
 
@@ -21,6 +21,7 @@ message Msg{
 
 message Resp{
     string body=1;
+    int64 offset=2;
 }
 
 message StatusCode{

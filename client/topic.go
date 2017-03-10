@@ -20,7 +20,11 @@ func main() {
 	}
 	etcd := etcd.NewEtcd()
 	defer etcd.Client.Close()
-	etcd.Client.Txn(context.TODO()).
+	if resp, _ := etcd.Client.Txn(context.TODO()).
 		If(clientv3.Compare(clientv3.CreateRevision("topicname"+os.Args[1]), "=", 0)).
-		Then(clientv3.OpPut("topicname"+os.Args[1], time.Now().String())).Commit()
+		Then(clientv3.OpPut("topicname"+os.Args[1], time.Now().String())).Commit(); resp.Succeeded {
+		logs.Info("creat topic:", os.Args[1])
+	} else {
+		logs.Error("topic alread exits")
+	}
 }

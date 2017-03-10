@@ -9,7 +9,7 @@ service In{
 
 message Msg{
     string topic=1;
-    string offset=2;
+    int64 offset=2;
     string alivetime=3;
     string body=4;
 }

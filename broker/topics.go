@@ -18,6 +18,10 @@ func (broker *Broker) watchTopics() {
 	resp, _ := broker.Client.Get(context.TODO(), "topicname", clientv3.WithPrefix())
 	for _, v := range resp.Kvs {
 		broker.topics.AddTopic(string(v.Key[9:]))
+		tlresp, _ := broker.Client.Get(context.TODO(), "topicleader"+string(v.Key[9:]))
+		if tlresp.Count == 0 {
+			go broker.voteTopicleader(string(v.Key[9:]))
+		}
 	}
 	wch := broker.Client.Watch(context.TODO(), "topicname", clientv3.WithPrefix())
 	for wresp := range wch {
@@ -48,7 +52,7 @@ func (broker *Broker) watchTopicLeader() {
 				if string(ev.Kv.Value) == broker.ip+":"+broker.clientport {
 					broker.leaders = append(broker.leaders, string(ev.Kv.Key[11:]))
 				}
-			case "DEL":
+			case "DELETE":
 				go broker.voteTopicleader(string(ev.Kv.Key[11:]))
 			}
 		}
@@ -124,7 +128,8 @@ func makeconn(ip string) (inrpc.In_SyncMsgClient, chan *inrpc.Msg) {
 func putfollow(mc inrpc.In_SyncMsgClient, msgch chan *inrpc.Msg) {
 	for {
 		msg, ok := <-msgch
-		if ok {
+		if ok && msg != nil {
+			logs.Info(ok, msg)
 			err := mc.Send(msg)
 			if err != nil {
 				logs.Error(err)

@@ -19,11 +19,13 @@ type RpcServer struct {
 
 func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg) (*clientrpc.StatusCode, error) {
 	log.Info("PutMsg")
+	log.Info("alivetime", config.Conf.Topic.Alivetime)
 	rpcserver.Broker.Put(remotemsg.GetTopic(), strconv.FormatInt(time.Now().Unix()+config.Conf.Topic.Alivetime, 10), remotemsg.GetBody())
 	return &clientrpc.StatusCode{Code: 200}, nil
 }
 
 func (rpcserver *RpcServer) Poll(ctx context.Context, req *clientrpc.Req) (*clientrpc.Resp, error) {
 	log.Info("Poll")
-	return &clientrpc.Resp{Body: rpcserver.Broker.Get(req.GetTopic(), req.GetOffset())}, nil
+	offset, body := rpcserver.Broker.Get(req.GetTopic(), req.GetOffset())
+	return &clientrpc.Resp{Body: body, Offset: offset}, nil
 }

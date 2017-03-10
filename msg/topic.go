@@ -12,22 +12,25 @@ import (
 )
 
 type topic struct {
-	rocks *gorocksdb.DB
-	mutex *sync.RWMutex
-	msg   map[string]*message
+	rocks  *gorocksdb.DB
+	mutex  *sync.RWMutex
+	offset int64
+	msg    map[int64]*message
 }
 
 func newTopic(name string) *topic {
 	rocks := newDB(name)
-	msg := make(map[string]*message)
+	msg := make(map[int64]*message)
 	return &topic{
-		rocks: rocks,
-		mutex: new(sync.RWMutex),
-		msg:   msg,
+		rocks:  rocks,
+		mutex:  new(sync.RWMutex),
+		offset: 0,
+		msg:    msg,
 	}
 }
 
 func (topic *topic) load() {
+	logs.Info("load form local")
 	ro := gorocksdb.NewDefaultReadOptions()
 	defer ro.Destroy()
 	ro.SetFillCache(false)
@@ -41,8 +44,12 @@ func (topic *topic) load() {
 			logs.Error(err)
 		}
 		topic.mutex.Lock()
-		topic.msg[string(it.Key().Data())] = newMessage(tmp.GetAlivetime(), tmp.GetBody())
+		off, _ := strconv.ParseInt(string(it.Key().Data()), 10, 64)
+		topic.msg[off] = newMessage(tmp.GetAlivetime(), tmp.GetBody())
 		topic.mutex.Unlock()
+		if off > topic.offset {
+			topic.offset = off
+		}
 		it.Key().Free()
 		it.Value().Free()
 	}
@@ -51,30 +58,39 @@ func (topic *topic) load() {
 	}
 }
 
-func (topic *topic) put(alivetime, body string, offset ...string) {
-	if len(offset) == 0 {
+func (topic *topic) put(alivetime, body string, offset ...int64) int64 {
+	if len(offset) != 0 {
 		tmp := newMessage(alivetime, body)
 		topic.mutex.Lock()
 		topic.msg[offset[0]] = tmp
 		topic.mutex.Unlock()
 		topic.dump(offset[0], tmp)
+		return offset[0]
 	} else {
 		tmp := newMessage(alivetime, body)
 		topic.mutex.Lock()
-		topic.msg[strconv.Itoa(len(topic.msg))] = tmp
+		topic.msg[topic.offset] = tmp
+		topic.offset++
 		topic.mutex.Unlock()
-		topic.dump(strconv.Itoa(len(topic.msg)), tmp)
+		topic.dump(int64(len(topic.msg)), tmp)
+		return topic.offset - 1
 	}
 }
 
-func (topic *topic) get(offset string) *message {
+func (topic *topic) get(offset int64) (off int64, message *message) {
 	topic.mutex.RLock()
-	message := topic.msg[offset]
-	topic.mutex.Unlock()
-	return message
+	defer topic.mutex.RUnlock()
+	for ; offset <= topic.offset-1; offset++ {
+		if v, ok := topic.msg[offset]; ok {
+			off = offset
+			message = v
+			break
+		}
+	}
+	return
 }
 
-func (topic *topic) dump(offset string, msg *message) {
+func (topic *topic) dump(offset int64, msg *message) {
 	body := &Msg{
 		Alivetime: proto.String(msg.alivetime),
 		Body:      proto.String(msg.body),
@@ -85,19 +101,19 @@ func (topic *topic) dump(offset string, msg *message) {
 	}
 	wo := gorocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
-	err = topic.rocks.Put(wo, []byte(offset), []byte(data))
+	err = topic.rocks.Put(wo, []byte(strconv.FormatInt(offset, 10)), []byte(data))
 	if err != nil {
 		logs.Error(err)
 	}
 }
 
-func (topic *topic) del(offset string) {
+func (topic *topic) del(offset int64) {
 	topic.mutex.Lock()
 	delete(topic.msg, offset)
 	topic.mutex.Unlock()
 	wo := gorocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
-	err := topic.rocks.Delete(wo, []byte(offset))
+	err := topic.rocks.Delete(wo, []byte(strconv.FormatInt(offset, 10)))
 	if err != nil {
 		logs.Error(err)
 	}
@@ -107,7 +123,9 @@ func (topic *topic) clean() {
 	for {
 		<-time.After(time.Minute)
 		for k, v := range topic.msg {
-			if v.alivetime >= strconv.FormatInt(time.Now().Unix(), 10) {
+			logs.Info("clean start", k, v)
+			if v.alivetime <= strconv.FormatInt(time.Now().Unix(), 10) {
+				logs.Info("del", k, v)
 				topic.del(k)
 			}
 		}
