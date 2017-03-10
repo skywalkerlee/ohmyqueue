@@ -16,9 +16,3 @@ omq(OhMyQueue) is a distributed message queue
 * 暂不打算支持kafka的在topic内分partition的机制,原因:1.本人对kafka的设计理念了解还不够,2.时间原因o(╯□╰)o
 * 支持水平扩展
 * 支持故障恢复
-
-#### Already Done:
-* gRPC通信框架 Done
-* 单topic发布&订阅 Done
-* 单topic的leader选举&follower备份 Done
-* 单topic的failover Done
