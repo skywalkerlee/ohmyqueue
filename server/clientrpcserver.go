@@ -26,6 +26,6 @@ func (rpcserver *RpcServer) PutMsg(ctx context.Context, remotemsg *clientrpc.Msg
 
 func (rpcserver *RpcServer) Poll(ctx context.Context, req *clientrpc.Req) (*clientrpc.Resp, error) {
 	log.Info("Poll")
-	offset, body := rpcserver.Broker.Get(req.GetTopic(), req.GetOffset())
-	return &clientrpc.Resp{Body: body, Offset: offset}, nil
+	offset, body, err := rpcserver.Broker.Get(req.GetTopic(), req.GetOffset())
+	return &clientrpc.Resp{Body: body, Offset: offset}, err
 }

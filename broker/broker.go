@@ -73,6 +73,6 @@ func (broker *Broker) Put(topic, alivetime, body string, offset ...int64) {
 	}
 }
 
-func (broker *Broker) Get(topic string, offset int64) (int64, string) {
+func (broker *Broker) Get(topic string, offset int64) (int64, string, error) {
 	return broker.topics.Get(topic, offset)
 }

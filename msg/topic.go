@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"errors"
+
 	"github.com/astaxie/beego/logs"
 	"github.com/golang/protobuf/proto"
 	"github.com/ohmq/ohmyqueue/inrpc"
@@ -78,16 +80,19 @@ func (topic *topic) put(alivetime, body string, offset ...int64) (off int64) {
 	return
 }
 
-func (topic *topic) get(offset int64) (off int64, message *message) {
+func (topic *topic) get(offset int64) (off int64, message string, err error) {
 	topic.mutex.RLock()
 	defer topic.mutex.RUnlock()
 	for ; offset <= topic.offset-1; offset++ {
 		if v, ok := topic.msg[offset]; ok {
 			off = offset
-			message = v
-			break
+			message = v.body
+			err = nil
+			return
 		}
 	}
+	off = -1
+	err = errors.New("not exits")
 	return
 }
 

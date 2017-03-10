@@ -32,9 +32,16 @@ func main() {
 	if resp.Count != 0 {
 		offmax, _ := strconv.Atoi(strings.Split(string(resp.Kvs[0].Value), ":")[0])
 		off := 0
-		for off <= offmax {
-			resp, _ := client.Poll(context.TODO(), &clientrpc.Req{Topic: os.Args[1], Offset: int64(off)})
+		for {
+			resp, err := client.Poll(context.TODO(), &clientrpc.Req{Topic: os.Args[1], Offset: int64(off)})
+			if err != nil {
+				logs.Error(err)
+				break
+			}
 			logs.Info(resp.GetOffset(), resp.GetBody())
+			if resp.GetOffset() == -1 || off == offmax {
+				break
+			}
 			off = int(resp.GetOffset()) + 1
 		}
 	}
@@ -49,5 +56,4 @@ func main() {
 			}
 		}
 	}
-
 }

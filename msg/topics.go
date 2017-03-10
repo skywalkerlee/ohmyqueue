@@ -21,9 +21,8 @@ func (topics Topics) Put(topic, alivetime, body string, offset ...int64) int64 {
 	return topics[topic].put(alivetime, body, offset...)
 }
 
-func (topics Topics) Get(topic string, offset int64) (int64, string) {
-	off, tmp := topics[topic].get(offset)
-	return off, tmp.body
+func (topics Topics) Get(topic string, offset int64) (int64, string, error) {
+	return topics[topic].get(offset)
 }
 
 func (topics Topics) GetAll(topic string) []*inrpc.Msg {
