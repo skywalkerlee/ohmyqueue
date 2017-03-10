@@ -26,6 +26,13 @@ func (broker *Broker) heartbeat() {
 	if err != nil {
 		logs.Error(err)
 	}
+	if txnresp, _ := broker.Client.Txn(context.TODO()).
+		If(clientv3.Compare(clientv3.CreateRevision("brokerid"+strconv.Itoa(broker.id)), "=", 0)).
+		Then(clientv3.OpPut("brokerid"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, clientv3.WithLease(resp.ID))).
+		Commit(); !txnresp.Succeeded {
+		logs.Error("brokerid is exits Now")
+		os.Exit(1)
+	}
 	_, err = broker.Client.Put(context.TODO(), "brokerid"+strconv.Itoa(broker.id), broker.ip+":"+broker.innerport, clientv3.WithLease(resp.ID))
 	if err != nil {
 		logs.Error(err)
