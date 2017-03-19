@@ -9,7 +9,7 @@ omq(OhMyQueue) is a distributed message queue
 
 #### DONE list：
 * Pub/Sub
-* clean expired data
+* 过期数据清理
 * backend storage使用rocks
 * 水平扩展
 
@@ -18,3 +18,4 @@ omq(OhMyQueue) is a distributed message queue
 * backend storage支持bitcask
 * cluster manager
 * 重构数据结构
+* 更改客户端连接逻辑
