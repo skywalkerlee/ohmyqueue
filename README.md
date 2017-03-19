@@ -3,12 +3,10 @@ omq(OhMyQueue) is a distributed message queue
 
 #### 架构图
    ![image](./doc/arch.png)
-   
+   ~~~
    ohmq is a distributed message queue written in golang
+   ~~~
 
-   
-    
-    
 #### DONE list：
 * Pub/Sub
 * clean expired data
