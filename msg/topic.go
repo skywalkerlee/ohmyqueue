@@ -52,8 +52,8 @@ func (topic *topic) load() {
 		if off > topic.offset {
 			topic.offset = off
 		}
-		it.Key().Free()
-		it.Value().Free()
+		//it.Key().Free()
+		//it.Value().Free()
 	}
 	if err := it.Err(); err != nil {
 		logs.Error(err)
