@@ -39,7 +39,7 @@ func (topic *topic) load() {
 	it := topic.rocks.NewIterator(ro)
 	defer it.Close()
 	it.SeekToFirst()
-	for it = it; it.Valid(); it.Next() {
+	for ; it.Valid(); it.Next() {
 		tmp := &Msg{}
 		err := proto.Unmarshal(it.Value().Data(), tmp)
 		if err != nil {
